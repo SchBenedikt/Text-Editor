@@ -17,13 +17,13 @@ To test the text editor, follow these steps:
 # ❇️Features
 The text editor window will open, allowing you to perform various operations. You can open existing files, save files, and export files as DOCX documents. Additionally, you can apply formatting to the text, such as bold, italic, and underline.
 
-## Test file operations
+## 📂 file operations
 Click on the "File" menu to access options like opening a file and saving a file. Try opening an existing text file and verify that its content is loaded into the text editor. Then, make some changes and save the file to confirm that the modifications are persisted.
 
-## Test formatting options
+## 🖊️ formatting options
 Click on the "Format" menu to apply formatting to the selected text. Try selecting some text and clicking on the "Bold," "Italic," or "Underline" options to apply the respective formatting. Verify that the selected text is formatted correctly.
 
-## Test export as DOCX
+## 💾 export as DOCX
 Click on the "File" menu and choose the "Export as DOCX" option. Select a location to save the exported DOCX file and confirm that the file is created successfully. Open the exported file in a word processing application to ensure that the formatting is preserved.
 
 That's it! You have now tested the text editor and verified its functionality. Feel free to explore and modify the code to suit your requirements.
