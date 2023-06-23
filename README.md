@@ -3,15 +3,15 @@ A text editor programmed with Python and PyQt5 with integration to Microsoft Wor
 # Get started
 This repository contains the code for a simple text editor implemented in Python. The text editor allows users to open, save, and export files, as well as apply formatting such as bold, italic, and underline. This post provides instructions on how to test the text editor.
 To test the text editor, follow these steps:
-- [ ] **Clone the repository**
+- [ ] **©️lone the repository**
       <br> Use the following command to clone the repository to your local machine: <br>
     ```git clone <repository-url>```
-- [ ] **Install the dependencies** <br>
+- [ ] **⌨️ Install the dependencies** <br>
       Navigate to the cloned repository and install the required dependencies by running the following command: <br>
 ```pip install -r requirements.txt```
 
-- [ ] **Run the text editor**<br>
-      Execute the main Python script to launch the text editor application:
+- [ ] **🎉 Run the text editor**<br>
+      Execute the main Python script to launch the text editor application:<br>
       ```python text_editor.py```
       
 # Features
