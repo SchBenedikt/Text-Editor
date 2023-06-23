@@ -1,11 +1,11 @@
 # Text-Editor
 A text editor programmed with Python and PyQt5 with integration to Microsoft Word.
-# Get started
+# 🛫Get started
 This repository contains the code for a simple text editor implemented in Python. The text editor allows users to open, save, and export files, as well as apply formatting such as bold, italic, and underline. This post provides instructions on how to test the text editor.
 To test the text editor, follow these steps:
 - [ ] **©️lone the repository**
       <br> Use the following command to clone the repository to your local machine: <br>
-    ```git clone <repository-url>```
+    ```git clone https://github.com/SchBenedikt/Text-Editor.git```
 - [ ] **⌨️ Install the dependencies** <br>
       Navigate to the cloned repository and install the required dependencies by running the following command: <br>
 ```pip install -r requirements.txt```
@@ -14,7 +14,7 @@ To test the text editor, follow these steps:
       Execute the main Python script to launch the text editor application:<br>
       ```python text_editor.py```
       
-# Features
+# ❇️Features
 The text editor window will open, allowing you to perform various operations. You can open existing files, save files, and export files as DOCX documents. Additionally, you can apply formatting to the text, such as bold, italic, and underline.
 
 ## Test file operations
