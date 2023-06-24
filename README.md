@@ -14,8 +14,10 @@ To test the text editor, follow these steps:
       Execute the main Python script to launch the text editor application:<br>
       ```python text_editor.py```
       
-# ❇️Features
+# [❇️Features](https://github.com/SchBenedikt/Text-Editor/wiki/Features)
 The text editor window will open, allowing you to perform various operations. You can open existing files, save files, and export files as DOCX documents. Additionally, you can apply formatting to the text, such as bold, italic, and underline.
+More features can be found in the Wiki.<br>
+[Text-Editor - Wiki](https://github.com/SchBenedikt/Text-Editor/wiki/Features)
 
 ## 📂 file operations
 Click on the "File" menu to access options like opening a file and saving a file. Try opening an existing text file and verify that its content is loaded into the text editor. Then, make some changes and save the file to confirm that the modifications are persisted.
