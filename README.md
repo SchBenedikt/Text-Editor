@@ -20,14 +20,18 @@ The text editor window will open, allowing you to perform various operations. Yo
 More features can be found in the Wiki.<br>
 [Text-Editor - Wiki](https://github.com/SchBenedikt/Text-Editor/wiki/Features)
 
-## 📂 file operations
-Click on the "File" menu to access options like opening a file and saving a file. Try opening an existing text file and verify that its content is loaded into the text editor. Then, make some changes and save the file to confirm that the modifications are persisted.
+- **Open File**: Open existing text files for viewing and editing.
+- **Save File**: Save the content of the active tab as a text file.
+- **Export as DOCX**: Export the content of the active tab as a DOCX (Microsoft Word) file.
+- **Bold, Italic, Underline**: Apply formatting styles to selected text or newly entered text.
+- **Increase Font Size**: Increase the font size of selected or new text.
+- **Change Font**: Select a different font for selected or new text.
+- **New Tab**: Create a new tab to work on multiple documents simultaneously.
+- **Close Tab**: Close the currently active tab, with a prompt for unsaved changes.
 
-## 🖊️ formatting options
-Click on the "Format" menu to apply formatting to the selected text. Try selecting some text and clicking on the "Bold," "Italic," or "Underline" options to apply the respective formatting. Verify that the selected text is formatted correctly.
 
-## 💾 export as DOCX
-Click on the "File" menu and choose the "Export as DOCX" option. Select a location to save the exported DOCX file and confirm that the file is created successfully. Open the exported file in a word processing application to ensure that the formatting is preserved.
+## Contributing
+Contributions to the Text Editor are welcome! If you encounter any issues or have ideas for improvements, feel free to submit a pull request or open an issue on GitHub.
 
 That's it! You have now tested the text editor and verified its functionality. Feel free to explore and modify the code to suit your requirements.
 
