@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QMessageBox, QFileDialog, QAction, qApp
-from PyQt5.QtGui import QFont, QTextCursor
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 from docx import Document
 from docx.shared import Pt
 
@@ -14,6 +14,7 @@ class TextEditor(QMainWindow):
         self.setCentralWidget(self.textarea)
 
         self.init_menu()
+        self.init_toolbar()
 
     def init_menu(self):
         menubar = self.menuBar()
@@ -35,25 +36,58 @@ class TextEditor(QMainWindow):
         exit_action.triggered.connect(qApp.quit)
         file_menu.addAction(exit_action)
 
-        format_menu = menubar.addMenu("Format")
-        bold_action = QAction("Bold", self)
-        bold_action.triggered.connect(self.bold_text)
-        format_menu.addAction(bold_action)
+    def init_toolbar(self):
+        toolbar = QToolBar(self)
+        self.addToolBar(toolbar)
 
-        italic_action = QAction("Italic", self)
-        italic_action.triggered.connect(self.italic_text)
-        format_menu.addAction(italic_action)
+        bold_button = QToolButton(self)
+        bold_button.setText("B")
+        bold_button.setCheckable(True)
+        bold_button.clicked.connect(self.bold_text)
+        bold_button.setStyleSheet("QToolButton { font-size: 20px; }")  # Increase the font size
+        toolbar.addWidget(bold_button)
 
-        underline_action = QAction("Underline", self)
-        underline_action.triggered.connect(self.underline_text)
-        format_menu.addAction(underline_action)
+        italic_button = QToolButton(self)
+        italic_button.setText("I")
+        italic_button.setCheckable(True)
+        italic_button.clicked.connect(self.italic_text)
+        italic_button.setStyleSheet("QToolButton { font-size: 20px; }")  # Increase the font size
+        toolbar.addWidget(italic_button)
+
+        underline_button = QToolButton(self)
+        underline_button.setText("U")
+        underline_button.setCheckable(True)
+        underline_button.clicked.connect(self.underline_text)
+        underline_button.setStyleSheet("QToolButton { font-size: 20px; }")  # Increase the font size
+        toolbar.addWidget(underline_button)
+
+        color_button = QToolButton(self)
+        color_button.setText("A")
+        color_button.clicked.connect(self.select_color)
+        color_button.setStyleSheet("QToolButton { font-size: 20px; }")  # Increase the font size
+        toolbar.addWidget(color_button)
+
+    def select_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.textarea.setTextColor(color)
 
     def open_file(self):
         file, _ = QFileDialog.getOpenFileName(self, "Open File")
         if file:
-            with open(file, "r") as f:
-                content = f.read()
+            encodings = ["utf-8", "latin-1", "cp1252"]
+            content = None
+            for encoding in encodings:
+                try:
+                    with open(file, "r", encoding=encoding) as f:
+                        content = f.read()
+                    break
+                except UnicodeDecodeError:
+                    continue
+            if content is not None:
                 self.textarea.setPlainText(content)
+            else:
+                QMessageBox.warning(self, "Open File", "Unable to open the file with the supported encodings.")
 
     def save_file(self):
         file, _ = QFileDialog.getSaveFileName(self, "Save File")
@@ -84,7 +118,12 @@ class TextEditor(QMainWindow):
             font.italic = True
         if font_format["underline"]:
             font.underline = True
+        if font_format["color"]:
+            color = font_format["color"]
+            rgb_color = RGBColor(color.red(), color.green(), color.blue())
+            font.color.rgb = rgb_color
         font.size = Pt(11)
+
 
     def get_runs_with_formatting(self, text):
         cursor = QTextCursor(self.textarea.document())
@@ -101,7 +140,8 @@ class TextEditor(QMainWindow):
             runs.append((char, {
                 "bold": char_format.font().bold(),
                 "italic": char_format.font().italic(),
-                "underline": char_format.font().underline()
+                "underline": char_format.font().underline(),
+                "color": char_format.foreground().color()
             }))
             start += 1
         return runs
@@ -132,6 +172,15 @@ class TextEditor(QMainWindow):
         format.setFont(font)
         cursor.mergeCharFormat(format)
         self.textarea.setFocus()
+
+    def change_text_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            cursor = self.textarea.textCursor()
+            format = cursor.charFormat()
+            format.setForeground(QBrush(color))
+            cursor.mergeCharFormat(format)
+            self.textarea.setFocus()
 
 if __name__ == "__main__":
     app = QApplication([])
