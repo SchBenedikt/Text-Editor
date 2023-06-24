@@ -28,6 +28,8 @@ More features can be found in the Wiki.<br>
 - **Change Font**: Select a different font for selected or new text.
 - **New Tab**: Create a new tab to work on multiple documents simultaneously.
 - **Close Tab**: Close the currently active tab, with a prompt for unsaved changes.
+# Screenshot
+<img width="350" alt="image" src="https://github.com/SchBenedikt/Text-Editor/assets/137323528/ddecdef2-d553-4ce4-a419-aeb8cd2214ed">
 
 
 ## Contributing
