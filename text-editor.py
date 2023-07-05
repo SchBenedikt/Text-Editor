@@ -4,6 +4,25 @@ from PyQt5.QtCore import *
 from docx import Document
 from docx.shared import Pt
 import os
+import re
+import webbrowser
+import sys
+import threading
+import requests
+from flask import Flask, request, session
+from authlib.integrations.flask_client import OAuth
+from authlib.integrations.requests_client import OAuth2Session
+from requests_oauthlib import OAuth2Session
+import threading
+from auth import app, github
+
+def get_username_from_about_file():
+    with open("about.txt", "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            if line.startswith("Username:"):
+                return line.strip().split(":")[1].strip()
+    return None
 
 class TextEditor(QMainWindow):
     def __init__(self):
@@ -20,17 +39,16 @@ class TextEditor(QMainWindow):
         self.init_menu()
         self.init_toolbar()
         self.init_tab_bar()
-        # QApplication.setStyle(QStyleFactory.create("Fusion"))
-
-        # Set additional Fusion style options for Windows 10/11-like appearance
-        self.set_style_options()
         self.open_new_tab()
+        text_area = QTextEdit()
+
+
+        self.set_style_options()
 
     def init_menu(self):
         menubar = self.menuBar()
 
         file_menu = menubar.addMenu("File")
-
         open_action = QAction("Open", self)
         open_action.triggered.connect(self.open_file)
         file_menu.addAction(open_action)
@@ -38,6 +56,10 @@ class TextEditor(QMainWindow):
         new_tab_action = QAction("New Tab", self)
         new_tab_action.triggered.connect(self.open_new_tab)
         file_menu.addAction(new_tab_action)
+
+        search_action = QAction("Search Word", self)
+        search_action.triggered.connect(self.show_search_dialog)
+        file_menu.addAction(search_action)
 
         exit_action = QAction("Exit", self)
         exit_action.triggered.connect(qApp.quit)
@@ -56,11 +78,55 @@ class TextEditor(QMainWindow):
         export_txt_action.triggered.connect(self.export_as_txt)
         save_menu.addAction(export_txt_action)
 
+        login_action = QAction("Login", self)
+        login_action.triggered.connect(self.start_webserver)
+        file_menu.addAction(login_action)
+
+        projects = self.load_projects()
+
+    # Add projects to the menu
+        projects_menu = menubar.addMenu("Projects")
+        for project in projects:
+            project_action = QAction(project, self)
+            project_action.triggered.connect(lambda _, p=project: self.open_project(p))
+            projects_menu.addAction(project_action)
+
+
+
+    def open_project(self, project):
+        username = get_username_from_about_file()
+        if username:
+            url = f"https://github.com/{username}/{project}"
+            webbrowser.open(url)
+        else:
+            # Handle the case when username is not available
+            pass
+
+    def load_projects(self):
+        projects = []
+        with open("projects.txt", "r") as file:
+            for line in file:
+                project = line.strip()
+                if project:
+                    projects.append(project)
+        return projects
+    
+    def start_webserver(self):
+        def run_flask_app():
+            app.run(host="localhost", port=5000)
+
+        flask_thread = threading.Thread(target=run_flask_app)
+        flask_thread.start()
+
+        # Open web browser to localhost:5000
+        url = "http://localhost:5000"
+        webbrowser.open(url)
+
     def init_toolbar(self):
         toolbar = QToolBar(self)
         self.addToolBar(toolbar)
 
-        toolbar.setIconSize(QSize(20, 20)) 
+        toolbar.setIconSize(QSize(20, 20))
 
         bold_action = QAction(QIcon("bold.png"), "Bold", self)
         bold_action.triggered.connect(self.bold_text)
@@ -87,6 +153,9 @@ class TextEditor(QMainWindow):
         change_color_action.triggered.connect(self.change_text_color)
         toolbar.addAction(change_color_action)
 
+        set_text_background_color = QAction(QIcon("change_bg_color.png"), "Change Background Color", self)
+        set_text_background_color.triggered.connect(self.set_text_background_color)
+        toolbar.addAction(set_text_background_color)
 
 
     def init_tab_bar(self):
@@ -177,6 +246,7 @@ class TextEditor(QMainWindow):
             rgb_color = QColor(font_format["color"])
             font.color.rgb = rgb_color.rgb()
         font.size = Pt(15)
+
 
     def get_runs_with_formatting(self, text):
         cursor = QTextCursor(self.textarea.document())
@@ -292,7 +362,15 @@ class TextEditor(QMainWindow):
             cursor.mergeCharFormat(format)
             current_widget.setFocus()
 
-
+    def set_text_background_color(self, color):
+        color = QColorDialog.getColor(parent=self)
+        if color.isValid():
+         current_widget = self.tab_widget.currentWidget()
+         cursor = current_widget.textCursor()
+         format = cursor.charFormat()
+         format.setBackground(color)
+         cursor.mergeCharFormat(format)
+         current_widget.setFocus()
 
     def open_new_tab(self):
         text_area = QTextEdit()
@@ -330,6 +408,43 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(current_index, file_name)
             else:
                 self.tab_widget.setTabText(current_index, "Untitled")
+
+    def search_word(self, word):
+        current_widget = self.tab_widget.currentWidget()
+        text_edit = current_widget
+        cursor = QTextCursor(text_edit.document())
+
+        if cursor.hasSelection():
+            cursor.clearSelection()
+
+        found = False
+        while True:
+            cursor = text_edit.document().find(word, cursor)
+
+            if cursor.isNull():
+                break
+
+            found = True
+
+            cursor.select(QTextCursor.WordUnderCursor)
+            text_edit.setTextCursor(cursor)
+            text_edit.ensureCursorVisible()
+
+            reply = QMessageBox.question(self, "Word Found", f"The word '{word}' was found in the document. Do you want to continue searching?", QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.No:
+                break
+
+        if not found:
+            QMessageBox.information(self, "Word Not Found", f"The word '{word}' was not found in the document.")
+
+
+
+    def show_search_dialog(self):
+        word, ok = QInputDialog.getText(self, "Search Word", "Enter the word to search:")
+        if ok:
+            self.search_word(word)
+
+
 
     def set_style_options(self):
         style_sheet = """
@@ -377,8 +492,14 @@ QTabBar::tab:hover {
         self.setStyleSheet(style_sheet)
 
 
+
 if __name__ == "__main__":
-    app = QApplication([])
-    text_editor = TextEditor()
-    text_editor.show()
-    app.exec_()
+    app_thread = threading.Thread(target=app.run, kwargs={"host": "localhost", "port": 5000})
+    app_thread.daemon = True
+    app_thread.start()
+
+    app_pyqt = QApplication(sys.argv)
+    window = TextEditor()
+    window.show()
+
+    sys.exit(app_pyqt.exec_())
