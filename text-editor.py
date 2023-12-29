@@ -40,7 +40,7 @@ class TextEditor(QMainWindow):
         self.init_toolbar()
         self.init_tab_bar()
         self.open_new_tab()
-        text_area = QTextEdit()
+        self.text_area = QTextEdit()
 
 
         self.set_style_options()
@@ -249,7 +249,7 @@ class TextEditor(QMainWindow):
 
 
     def get_runs_with_formatting(self, text):
-        cursor = QTextCursor(self.textarea.document())
+        cursor = QTextCursor(self.text_area.document())
         cursor.setPosition(0)
         cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
         selected_text = cursor.selection().toPlainText()
