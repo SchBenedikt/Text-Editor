@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, RGBColor
 import os
 import re
 import webbrowser
@@ -211,9 +211,9 @@ class TextEditor(QMainWindow):
         if file:
             doc = Document()
             current_widget = self.tab_widget.currentWidget()
-            content = current_widget.toPlainText()
+            #content = current_widget.toPlainText()
             paragraph = doc.add_paragraph()
-            runs = self.get_runs_with_formatting(content)
+            runs = self.get_runs_with_formatting(current_widget)
             for run_text, font_format in runs:
                 run = paragraph.add_run(run_text)
                 self.apply_formatting(run, font_format)
@@ -244,12 +244,14 @@ class TextEditor(QMainWindow):
             font.underline = True
         if font_format["color"]:
             rgb_color = QColor(font_format["color"])
-            font.color.rgb = rgb_color.rgb()
+            #font.color.rgb = rgb_color.rgb()
+            font.color.rgb = RGBColor(rgb_color.red(), rgb_color.green(), rgb_color.blue())
         font.size = Pt(15)
 
 
-    def get_runs_with_formatting(self, text):
-        cursor = QTextCursor(self.text_area.document())
+    def get_runs_with_formatting(self, text_widget):
+        #cursor = QTextCursor(self.text_area.document())
+        cursor = QTextCursor(text_widget.document())
         cursor.setPosition(0)
         cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
         selected_text = cursor.selection().toPlainText()
