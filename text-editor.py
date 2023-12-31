@@ -15,7 +15,9 @@ from authlib.integrations.requests_client import OAuth2Session
 from requests_oauthlib import OAuth2Session
 import threading
 from auth import app, github
+from urllib.parse import quote
 
+from base64 import b64decode
 def get_username_from_about_file():
     with open("about.txt", "r") as file:
         lines = file.readlines()
@@ -93,11 +95,40 @@ class TextEditor(QMainWindow):
 
 
 
+
+
+
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
-            url = f"https://github.com/{username}/{project}"
-            webbrowser.open(url)
+            repo_url = f"https://api.github.com/repos/{username}/{project}/contents"
+            try:
+                response = requests.get(repo_url)
+                response.raise_for_status()  # Check if the request was successful
+
+                files = [file_info["name"] for file_info in response.json()]
+
+                # Display the file names in a QMessageBox
+                if files:
+                    selected_file, ok = QInputDialog.getItem(self, "Select File", "Select a file to open:", files, 0, False)
+                    if ok and selected_file:
+                        # Fetch the content of the selected file
+                        file_content_url = f"https://api.github.com/repos/{username}/{project}/contents/{quote(selected_file)}"
+                        content_response = requests.get(file_content_url)
+                        content_response.raise_for_status()
+
+                        # Decode the base64-encoded content
+                        content = b64decode(content_response.json()["content"]).decode("utf-8")
+
+                        # Open the content in a new tab in the text editor
+                        self.open_new_tab()
+                        current_widget = self.tab_widget.currentWidget()
+                        current_widget.setPlainText(content)
+                        self.set_tab_title(current_widget, selected_file)
+                else:
+                    QMessageBox.warning(self, "No Files", f"There are no files in {project}.")
+            except requests.RequestException as e:
+                QMessageBox.warning(self, "Error", f"Error fetching project files: {str(e)}")
         else:
             # Handle the case when username is not available
             pass
