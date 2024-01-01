@@ -47,6 +47,8 @@ class TextEditor(QMainWindow):
         self.open_new_tab()
         self.text_area = QTextEdit()
 
+        self.init_hotkeys()
+
         self.set_style_options()
 
     def init_menu(self):
@@ -94,6 +96,13 @@ class TextEditor(QMainWindow):
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
+
+    def init_hotkeys(self):
+        save_shortcut = QShortcut(QKeySequence("Ctrl+s"), self)
+        save_shortcut.activated.connect(self.save_file)
+
+        search_shortcut = QShortcut(QKeySequence("Ctrl+f"), self)
+        search_shortcut.activated.connect(self.show_search_dialog)
 
     def open_project(self, project):
         username = get_username_from_about_file()
