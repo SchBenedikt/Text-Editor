@@ -29,7 +29,8 @@ More features can be found in the Wiki.<br>
 - **New Tab**: Create a new tab to work on multiple documents simultaneously.
 - **Close Tab**: Close the currently active tab, with a prompt for unsaved changes.
 # Screenshot
-<img width="350" alt="image" src="https://github.com/SchBenedikt/Text-Editor/assets/137323528/ddecdef2-d553-4ce4-a419-aeb8cd2214ed">
+![image](https://github.com/SchBenedikt/Text-Editor/assets/137323528/84378902-e87f-405a-aed1-8f0437417dc3)
+![image](https://github.com/SchBenedikt/Text-Editor/assets/137323528/191ffcd3-89da-4711-8e73-5e0ab45e7923)
 
 
 ## Contributing
