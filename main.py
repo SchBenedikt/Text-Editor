@@ -104,6 +104,9 @@ class TextEditor(QMainWindow):
         search_shortcut = QShortcut(QKeySequence("Ctrl+f"), self)
         search_shortcut.activated.connect(self.show_search_dialog)
 
+        newtab_shortcut = QShortcut(QKeySequence("Ctrl+n"), self)
+        newtab_shortcut.activated.connected(self.open_new_tab)
+
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
