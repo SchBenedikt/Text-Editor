@@ -231,15 +231,26 @@ class TextEditor(QMainWindow):
     def save_file(self):
         current_widget = self.tab_widget.currentWidget()
         content = current_widget.toPlainText()
-        file, _ = QFileDialog.getSaveFileName(self, "Save File")
-        if file:
+        file_path = getattr(current_widget, "file_path", None)
+
+        if file_path:
             try:
-                with open(file, "w") as f:
+                with open(file_path, "w") as f:
                     f.write(content)
-                self.set_tab_title(current_widget, file)  # Set the tab title
-                QMessageBox.information(self, "Save File", "File saved successfully.")
+                self.set_tab_title(current_widget, file_path)
+                QMessageBox.information(self, "Save File", "File saved")
             except:
-                QMessageBox.warning(self, "Save File", "Unable to save the file.")
+                QMessageBox.warning(self, "Save File", "Unable to save the file")
+        else:
+            file, _ = QFileDialog.getSaveFileName(self, "Save File")
+            if file:
+                try:
+                    with open(file, "w") as f:
+                        f.write(content)
+                    self.set_tab_title(current_widget, file)  # Set the tab title
+                    QMessageBox.information(self, "Save File", "File saved successfully.")
+                except:
+                    QMessageBox.warning(self, "Save File", "Unable to save the file.")
 
     def set_tab_title(self, text_widget, file_path):
         # Set the tab title to the file name
