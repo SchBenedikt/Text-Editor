@@ -173,7 +173,7 @@ class TextEditor(QMainWindow):
         increase_font_action.triggered.connect(self.increase_font_size)
         toolbar.addAction(increase_font_action)
 
-        decrease_font_action = QAction(QIcon("increase_font.png"), "Decrease Font Size", self)
+        decrease_font_action = QAction(QIcon("decrease_font.png"), "Decrease Font Size", self)
         decrease_font_action.triggered.connect(self.decrease_font_size)
         toolbar.addAction(decrease_font_action)
 
