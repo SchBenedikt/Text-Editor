@@ -48,10 +48,6 @@ class TextEditor(QMainWindow):
         self.open_empty_tab()
         self.text_area = QTextEdit()
 
-        self.init_hotkeys()
-
-        self.set_style_options()
-
     def init_menu(self):
         menubar = self.menuBar()
 
@@ -61,10 +57,12 @@ class TextEditor(QMainWindow):
         file_menu.addAction(open_action)
 
         new_tab_action = QAction("New Tab", self)
+        new_tab_action.setShortcut(QKeySequence("Ctrl+T")) 
         new_tab_action.triggered.connect(self.open_new_tab)
         file_menu.addAction(new_tab_action)
 
         search_action = QAction("Search Word", self)
+        search_action.setShortcut(QKeySequence("Ctrl+F"))
         search_action.triggered.connect(self.show_search_dialog)
         file_menu.addAction(search_action)
 
@@ -74,6 +72,7 @@ class TextEditor(QMainWindow):
 
         save_menu = menubar.addMenu("Save")
         save_action = QAction("Save", self)
+        save_action.setShortcut(QKeySequence("Ctrl+S"))
         save_action.triggered.connect(self.save_file)
         save_menu.addAction(save_action)
 
@@ -85,28 +84,35 @@ class TextEditor(QMainWindow):
         export_txt_action.triggered.connect(self.export_as_txt)
         save_menu.addAction(export_txt_action)
 
+        edit_menu = menubar.addMenu("Edit")
+        undo_action = QAction("Undo", self)
+        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.triggered.connect(self.undo)
+        edit_menu.addAction(undo_action)
+
+        redo_action = QAction("Redo", self)
+        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.triggered.connect(self.redo)
+        edit_menu.addAction(redo_action)
+
+        # Move "Login" action to the "Projects" menu
+        projects_menu = menubar.addMenu("Projects")
         login_action = QAction("Login", self)
         login_action.triggered.connect(self.start_webserver)
-        file_menu.addAction(login_action)
+        projects_menu.addAction(login_action)
 
         projects = self.load_projects()
+        if projects:
+            # Add a separator between "Login" and the projects
+            projects_menu.addSeparator()
 
+        self.set_style_options()
+            
         # Add projects to the menu
-        projects_menu = menubar.addMenu("Projects")
         for project in projects:
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
-
-    def init_hotkeys(self):
-        save_shortcut = QShortcut(QKeySequence("Ctrl+s"), self)
-        save_shortcut.activated.connect(self.save_file)
-
-        search_shortcut = QShortcut(QKeySequence("Ctrl+f"), self)
-        search_shortcut.activated.connect(self.show_search_dialog)
-
-        newtab_shortcut = QShortcut(QKeySequence("Ctrl+n"), self)
-        newtab_shortcut.activated.connect(self.open_new_tab)
 
     def open_project(self, project):
         username = get_username_from_about_file()
@@ -163,6 +169,13 @@ class TextEditor(QMainWindow):
         # Open web browser to localhost:5000
         url = "http://localhost:5000"
         webbrowser.open(url)
+    def undo(self):
+        current_widget = self.tab_widget.currentWidget()
+        current_widget.undo()
+
+    def redo(self):
+        current_widget = self.tab_widget.currentWidget()
+        current_widget.redo()
 
     def init_toolbar(self):
         toolbar = QToolBar(self)
@@ -203,6 +216,7 @@ class TextEditor(QMainWindow):
         set_text_background_color.triggered.connect(self.set_text_background_color)
         toolbar.addAction(set_text_background_color)
 
+       
     def init_tab_bar(self):
         add_tab_button = QToolButton(self)
         add_tab_button.setText("+")
@@ -323,25 +337,12 @@ class TextEditor(QMainWindow):
             start += 1
         return runs
 
-    def closeEvent(self, event):
-        current_widget = self.tab_widget.currentWidget()
-        if self.is_unsaved_changes(current_widget):
-            reply = QMessageBox.question(self, "Unsaved Changes",
-                                         "There are unsaved changes. Do you want to save before exiting?",
-                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            if reply == QMessageBox.Save:
-                self.save_file()
-            elif reply == QMessageBox.Cancel:
-                event.ignore()
-                return
-        event.accept()
 
     def is_unsaved_changes(self, text_widget):
         if isinstance(text_widget, QTextEdit):  # Check if text_widget is a QTextEdit instance
             content = text_widget.toPlainText()
             return content != "" and content != self.get_file_content(text_widget)
         return False
-
     def get_file_content(self, text_widget):
         file_path = getattr(text_widget, "file_path", None)
         if file_path:
@@ -548,7 +549,6 @@ class TextEditor(QMainWindow):
         if self.tab_widget.count() == 0:
             # Close the entire application
             self.close()
-
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
         current_index = self.tab_widget.currentIndex()
