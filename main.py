@@ -47,10 +47,6 @@ class TextEditor(QMainWindow):
         self.open_new_tab()
         self.text_area = QTextEdit()
 
-        self.init_hotkeys()
-
-        self.set_style_options()
-
     def init_menu(self):
         menubar = self.menuBar()
 
@@ -90,6 +86,21 @@ class TextEditor(QMainWindow):
 
         projects = self.load_projects()
 
+        self.init_hotkeys()
+
+
+        undo_action = QAction("Undo", self)
+        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.triggered.connect(self.undo)
+
+        redo_action = QAction("Redo", self)
+        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.triggered.connect(self.redo)
+        self.set_style_options()
+
+        edit_menu = menubar.addMenu("Edit")
+        edit_menu.addAction(undo_action)
+        edit_menu.addAction(redo_action)
         # Add projects to the menu
         projects_menu = menubar.addMenu("Projects")
         for project in projects:
@@ -162,6 +173,13 @@ class TextEditor(QMainWindow):
         # Open web browser to localhost:5000
         url = "http://localhost:5000"
         webbrowser.open(url)
+    def undo(self):
+        current_widget = self.tab_widget.currentWidget()
+        current_widget.undo()
+
+    def redo(self):
+        current_widget = self.tab_widget.currentWidget()
+        current_widget.redo()
 
     def init_toolbar(self):
         toolbar = QToolBar(self)
@@ -202,6 +220,7 @@ class TextEditor(QMainWindow):
         set_text_background_color.triggered.connect(self.set_text_background_color)
         toolbar.addAction(set_text_background_color)
 
+       
     def init_tab_bar(self):
         add_tab_button = QToolButton(self)
         add_tab_button.setText("+")
