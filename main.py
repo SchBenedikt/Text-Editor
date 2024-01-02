@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtWebEngineWidgets import *
 from docx import Document
 from docx.shared import Pt, RGBColor
 import os
@@ -44,7 +45,7 @@ class TextEditor(QMainWindow):
         self.init_menu()
         self.init_toolbar()
         self.init_tab_bar()
-        self.open_new_tab()
+        self.open_empty_tab()
         self.text_area = QTextEdit()
 
         self.init_hotkeys()
@@ -336,8 +337,10 @@ class TextEditor(QMainWindow):
         event.accept()
 
     def is_unsaved_changes(self, text_widget):
-        content = text_widget.toPlainText()
-        return content != "" and content != self.get_file_content(text_widget)
+        if isinstance(text_widget, QTextEdit):  # Check if text_widget is a QTextEdit instance
+            content = text_widget.toPlainText()
+            return content != "" and content != self.get_file_content(text_widget)
+        return False
 
     def get_file_content(self, text_widget):
         file_path = getattr(text_widget, "file_path", None)
@@ -447,12 +450,74 @@ class TextEditor(QMainWindow):
             current_widget.setFocus()
 
     def open_new_tab(self):
+        options = ["New File", "Chat"]
+        selected_option, ok = QInputDialog.getItem(self, "New File or Chat?", "Choose an option:", options, 0, False)
+
+        if ok:
+            if selected_option == "New File":
+                dialog = QFileDialog(self)
+                dialog.setFileMode(QFileDialog.AnyFile)
+
+                options = QFileDialog.Options()
+                options |= QFileDialog.DontUseNativeDialog
+                fileName, _ = dialog.getSaveFileName(self, "New File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
+
+                if fileName:
+                    if fileName.endswith(".txt"):
+                        # If the selected file is a text file, open it in a new tab
+                        self.open_text_file_in_tab(fileName)
+                    elif fileName.endswith(".py"):
+                        # If the selected file is a Python file, open it in a new tab
+                        self.open_python_file_in_tab(fileName)
+                    else:
+                        # If it's another type of file, open it in a new tab
+                        self.open_generic_file_in_tab(fileName)
+                else:
+                    # If no file was selected, open an empty tab
+                    self.open_empty_tab()
+            elif selected_option == "Chat":
+                self.open_chat_tab()
+    def open_chat_tab(self):
+        chat_view = QWebEngineView()
+        chat_view.setUrl(QUrl("https://platform.openai.com/"))
+        chat_widget = QWidget()
+        layout = QVBoxLayout(chat_widget)
+        layout.addWidget(chat_view)
+
+        self.tab_widget.addTab(chat_widget, "Chat")
+
+
+    def open_text_file_in_tab(self, file_path):
+        with open(file_path, "r") as file:
+            content = file.read()
+
+        text_area = QTextEdit()
+        text_area.setFont(QFont("TkDefaultFont"))
+        text_area.textChanged.connect(self.update_tab_title)
+        text_area.setPlainText(content)
+        self.tab_widget.addTab(text_area, os.path.basename(file_path))
+        self.tab_widget.setCurrentWidget(text_area)
+
+    def open_python_file_in_tab(self, file_path):
+        # Implementiere entsprechende Logik, um Python-Dateien zu öffnen
+        pass
+
+    def open_generic_file_in_tab(self, file_path):
+        # Implementiere entsprechende Logik, um generische Dateien zu öffnen
+        pass
+    def open_empty_tab(self):
         text_area = QTextEdit()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
         self.tab_widget.addTab(text_area, "Untitled")
         self.tab_widget.setCurrentWidget(text_area)
 
+    def open_new_empty_tab(self):
+        text_area = QTextEdit()
+        text_area.setFont(QFont("TkDefaultFont"))
+        text_area.textChanged.connect(self.update_tab_title)
+        self.tab_widget.addTab(text_area, "Untitled")
+        self.tab_widget.setCurrentWidget(text_area)
     def close_tab(self, index):
         text_area = self.tab_widget.widget(index)
         if self.is_unsaved_changes(text_area):
@@ -464,6 +529,18 @@ class TextEditor(QMainWindow):
             elif reply == QMessageBox.Cancel:
                 return
         self.tab_widget.removeTab(index)
+    def closeEvent(self, event):
+        current_widget = self.tab_widget.currentWidget()
+        if self.is_unsaved_changes(current_widget):
+            reply = QMessageBox.question(self, "Unsaved Changes",
+                                         "There are unsaved changes. Do you want to save before exiting?",
+                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            if reply == QMessageBox.Save:
+                self.save_file()
+            elif reply == QMessageBox.Cancel:
+                event.ignore()
+                return
+        event.accept()
 
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
