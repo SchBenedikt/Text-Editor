@@ -60,10 +60,12 @@ class TextEditor(QMainWindow):
         file_menu.addAction(open_action)
 
         new_tab_action = QAction("New Tab", self)
+        new_tab_action.setShortcut(QKeySequence("Ctrl+T")) 
         new_tab_action.triggered.connect(self.open_new_tab)
         file_menu.addAction(new_tab_action)
 
         search_action = QAction("Search Word", self)
+        search_action.setShortcut(QKeySequence("Ctrl+F"))
         search_action.triggered.connect(self.show_search_dialog)
         file_menu.addAction(search_action)
 
@@ -73,6 +75,7 @@ class TextEditor(QMainWindow):
 
         save_menu = menubar.addMenu("Save")
         save_action = QAction("Save", self)
+        save_action.setShortcut(QKeySequence("Ctrl+S"))
         save_action.triggered.connect(self.save_file)
         save_menu.addAction(save_action)
 
@@ -84,28 +87,35 @@ class TextEditor(QMainWindow):
         export_txt_action.triggered.connect(self.export_as_txt)
         save_menu.addAction(export_txt_action)
 
+        edit_menu = menubar.addMenu("Edit")
+        undo_action = QAction("Undo", self)
+        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.triggered.connect(self.undo)
+        edit_menu.addAction(undo_action)
+
+        redo_action = QAction("Redo", self)
+        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.triggered.connect(self.redo)
+        edit_menu.addAction(redo_action)
+
+        # Move "Login" action to the "Projects" menu
+        projects_menu = menubar.addMenu("Projects")
         login_action = QAction("Login", self)
         login_action.triggered.connect(self.start_webserver)
-        file_menu.addAction(login_action)
+        projects_menu.addAction(login_action)
 
         projects = self.load_projects()
+        if projects:
+            # Add a separator between "Login" and the projects
+            projects_menu.addSeparator()
 
+        self.set_style_options()
+            
         # Add projects to the menu
-        projects_menu = menubar.addMenu("Projects")
         for project in projects:
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
-
-    def init_hotkeys(self):
-        save_shortcut = QShortcut(QKeySequence("Ctrl+s"), self)
-        save_shortcut.activated.connect(self.save_file)
-
-        search_shortcut = QShortcut(QKeySequence("Ctrl+f"), self)
-        search_shortcut.activated.connect(self.show_search_dialog)
-
-        newtab_shortcut = QShortcut(QKeySequence("Ctrl+n"), self)
-        newtab_shortcut.activated.connect(self.open_new_tab)
 
     def open_project(self, project):
         username = get_username_from_about_file()
