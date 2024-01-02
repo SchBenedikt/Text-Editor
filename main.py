@@ -520,6 +520,7 @@ class TextEditor(QMainWindow):
         self.tab_widget.setCurrentWidget(text_area)
     def close_tab(self, index):
         text_area = self.tab_widget.widget(index)
+
         if self.is_unsaved_changes(text_area):
             reply = QMessageBox.question(self, "Unsaved Changes",
                                          "There are unsaved changes. Do you want to save before closing the tab?",
@@ -528,6 +529,7 @@ class TextEditor(QMainWindow):
                 self.save_file()
             elif reply == QMessageBox.Cancel:
                 return
+
         self.tab_widget.removeTab(index)
     def closeEvent(self, event):
         current_widget = self.tab_widget.currentWidget()
@@ -541,6 +543,11 @@ class TextEditor(QMainWindow):
                 event.ignore()
                 return
         event.accept()
+
+        # Check if it's the last tab being closed
+        if self.tab_widget.count() == 0:
+            # Close the entire application
+            self.close()
 
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
