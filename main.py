@@ -48,6 +48,14 @@ class TextEditor(QMainWindow):
         self.open_empty_tab()
         self.text_area = QTextEdit()
 
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        # Statistik-Label erstellen
+        self.stats_label = QLabel("Word count: 0 | Character count: 0", self)
+        self.status_bar.addWidget(self.stats_label)
+
+
     def init_menu(self):
         menubar = self.menuBar()
 
@@ -113,7 +121,15 @@ class TextEditor(QMainWindow):
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
-
+    def update_status_bar(self):
+        current_widget = self.tab_widget.currentWidget()
+        if isinstance(current_widget, QTextEdit):
+            content = current_widget.toPlainText()
+            word_count = len(re.findall(r'\b\w+\b', content))
+            char_count = len(content)
+            self.stats_label.setText(f"Word count: {word_count} | Character count: {char_count}")
+        else:
+            self.stats_label.setText("")
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
@@ -510,6 +526,7 @@ class TextEditor(QMainWindow):
         text_area = QTextEdit()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
+        text_area.textChanged.connect(self.update_status_bar)
         self.tab_widget.addTab(text_area, "Untitled")
         self.tab_widget.setCurrentWidget(text_area)
 
@@ -517,6 +534,7 @@ class TextEditor(QMainWindow):
         text_area = QTextEdit()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
+        text_area.textChanged.connect(self.update_status_bar)
         self.tab_widget.addTab(text_area, "Untitled")
         self.tab_widget.setCurrentWidget(text_area)
     def close_tab(self, index):
@@ -610,7 +628,7 @@ QTabWidget::pane {
 
 QTabWidget::tab-bar {
     alignment: left;
-    height: auto;
+    height: 100%;
 }
 
 QTabBar::tab {
@@ -620,10 +638,10 @@ QTabBar::tab {
     padding: 10px 0;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    width: 100px;
+    width: 100%;
     height: 10px;
     text-align: center; 
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 1s ease, color 1 ease;
 }
 
 QTabBar::tab:selected {
