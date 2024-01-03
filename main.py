@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from docx import Document
 from docx.shared import Pt, RGBColor
 import os
@@ -83,6 +84,11 @@ class TextEditor(QMainWindow):
         export_txt_action = QAction("Export as TXT", self)
         export_txt_action.triggered.connect(self.export_as_txt)
         save_menu.addAction(export_txt_action)
+
+        print_action = QAction("Print", self)
+        print_action.setShortcut(QKeySequence("Ctrl+P"))
+        print_action.triggered.connect(self.print_document)
+        save_menu.addAction(print_action)
 
         edit_menu = menubar.addMenu("Edit")
         undo_action = QAction("Undo", self)
@@ -566,7 +572,14 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(current_index, file_name)
             else:
                 self.tab_widget.setTabText(current_index, "Untitled")
+    def print_document(self):
+        printer = QPrinter(QPrinter.HighResolution)
+        printer.setPageSize(QPrinter.A4)
 
+        dialog = QPrintDialog(printer, self)
+        if dialog.exec_() == QPrintDialog.Accepted:
+            current_widget = self.tab_widget.currentWidget()
+            current_widget.print_(printer)
     def search_word(self, word):
         current_widget = self.tab_widget.currentWidget()
         text_edit = current_widget
@@ -610,7 +623,7 @@ QTabWidget::pane {
 
 QTabWidget::tab-bar {
     alignment: left;
-    height: auto;
+    height: 100%;
 }
 
 QTabBar::tab {
@@ -620,10 +633,10 @@ QTabBar::tab {
     padding: 10px 0;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    width: 100px;
+    width: 100%;
     height: 10px;
     text-align: center; 
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 1s ease, color 1 ease;
 }
 
 QTabBar::tab:selected {
