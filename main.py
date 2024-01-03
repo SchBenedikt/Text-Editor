@@ -628,7 +628,7 @@ QTabWidget::pane {
 
 QTabWidget::tab-bar {
     alignment: left;
-    height: 100%;
+    height: auto;
 }
 
 QTabBar::tab {
@@ -638,10 +638,10 @@ QTabBar::tab {
     padding: 10px 0;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    width: 100%;
+    width: 100px;
     height: 10px;
     text-align: center; 
-    transition: background-color 1s ease, color 1 ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 QTabBar::tab:selected {
@@ -660,7 +660,6 @@ QTabBar::tab:hover {
     color: #303030; 
     cursor: pointer; 
 }
-
 
         """
         self.setStyleSheet(style_sheet)
