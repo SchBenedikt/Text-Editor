@@ -59,6 +59,35 @@ class TextEditor(QMainWindow):
 
     def init_menu(self):
         menubar = self.menuBar()
+        # Infos-Menü
+        info_menu = menubar.addMenu('Infos')
+        developer_action = QAction('Developer', self)
+        developer_action.triggered.connect(self.show_developer_action)
+        info_menu.addAction(developer_action)
+
+        about_action = QAction('About', self)
+        about_action.triggered.connect(self.show_info_dock)
+        info_menu.addAction(about_action)
+
+        # QDockWidget für Infos erstellen
+        self.info_dock = QDockWidget("Infos", self)
+        self.info_dock.setAllowedAreas(Qt.BottomDockWidgetArea)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.info_dock)
+
+        # Layout für den Inhalt des QDockWidget erstellen
+        dock_content = QWidget()
+        dock_layout = QVBoxLayout(dock_content)
+        self.label_word_count = QLabel()
+        self.label_char_count = QLabel()
+        dock_layout.addWidget(self.label_word_count)
+        dock_layout.addWidget(self.label_char_count)
+
+        # QDockWidget mit dem Layout verbinden
+        self.info_dock.setWidget(dock_content)
+
+        # Das QDockWidget initial verstecken
+        self.info_dock.hide()
+
 
         file_menu = menubar.addMenu("File")
         open_action = QAction("Open", self)
@@ -131,11 +160,113 @@ class TextEditor(QMainWindow):
         current_widget = self.tab_widget.currentWidget()
         if isinstance(current_widget, QTextEdit):
             content = current_widget.toPlainText()
+
+            # Word und Zeichen zählen (Apostrophe als Teil eines Worts berücksichtigen)
             word_count = len(re.findall(r'\b\w+\'?\w*\b', content))
             char_count = len(content)
+
+            # Statusleisteninformationen aktualisieren
             self.stats_label.setText(f"Word count: {word_count} | Character count: {char_count}")
         else:
             self.stats_label.setText("")
+    def show_developer_action(self):
+        developer_info_dialog = QDialog(self)
+        developer_info_dialog.setWindowTitle("Entwickler")
+
+        # GitHub-Repository-Informationen
+        repo_owner = "SchBenedikt"
+        repo_name = "Text-Editor"
+        repo_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contributors"
+
+        # Anfrage an die GitHub-API senden
+        response = requests.get(repo_url)
+        if response.status_code == 200:
+            contributors = response.json()
+
+            # QTableWidget für die Entwicklerinformationen erstellen
+            table = QTableWidget()
+            table.setRowCount(len(contributors))
+            table.setColumnCount(1)  # Eine Spalte für den Benutzernamen
+            table.setHorizontalHeaderLabels(["Username"])
+
+            # Tabelle mit Daten füllen
+            for row, contributor in enumerate(contributors):
+                username = contributor.get("login", "Unknown")
+
+                # Daten in die Tabelle einfügen
+                table.setItem(row, 0, QTableWidgetItem(username))
+
+            # Tabelle zum Layout des Dialogs hinzufügen
+            layout = QVBoxLayout(developer_info_dialog)
+            layout.addWidget(table)
+
+            # Tabelle an die Größe des Inhalts anpassen
+            table.resizeColumnsToContents()
+
+            # Die Bearbeitung der Zellen in der Tabelle deaktivieren
+            table.setEditTriggers(QTableWidget.NoEditTriggers)
+
+            # Tabelle soll die gesamte Breite des Dialogs einnehmen
+            header = table.horizontalHeader()
+            header.setSectionResizeMode(0, QHeaderView.Stretch)
+
+            # Das Dialogfenster in der Mitte des Hauptfensters positionieren
+            rect = self.geometry()
+            developer_info_dialog.move(rect.center() - developer_info_dialog.rect().center())
+
+            # Die Modalität des Fensters auf Anwendungsmodalität setzen
+            developer_info_dialog.setWindowModality(Qt.ApplicationModal)
+
+            # Das QDialog anzeigen
+            developer_info_dialog.exec_()
+    def show_info_dock(self):
+        # Replace with your actual repository and author
+        repo_owner = "SchBenedikt"
+        repo_name = "Text-Editor"
+
+        # Fetch the latest release information from GitHub
+        release_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+        response = requests.get(release_url)
+        if response.status_code == 200:
+            latest_version = response.json().get("tag_name", "vYYYY.MM.DD")  # Replace with a default version
+        else:
+            latest_version = "vYYYY.MM.DD"  # Replace with a default version
+
+        # Compare the latest version with the current version
+        current_version = "v2024.01.01"  # Replace with your actual version
+
+        # Create a new QDialog for displaying version information
+        info_dialog = QDialog(self)
+        info_dialog.setWindowTitle("About")
+
+        # Create QLabel widgets for displaying version information
+        if latest_version != current_version:
+            label_version = QLabel(f"Current Version: {current_version}\n\nNew Version: {latest_version}", info_dialog)
+            button_open_release = QPushButton("New release available", info_dialog)
+            button_open_release.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(release_url)))
+        else:
+            label_version = QLabel(f"{current_version}", info_dialog)
+            button_open_release = None
+
+        # Add widgets to layout
+        layout = QVBoxLayout(info_dialog)
+        layout.addWidget(label_version)
+        if button_open_release:
+            layout.addWidget(button_open_release)
+
+        # Adjust the size of the window based on its contents plus 10 pixels
+        info_dialog.adjustSize()
+        info_dialog.setFixedSize(info_dialog.width() + 10, info_dialog.height() + 10)
+
+        # Center the dialog on the main window
+        rect = self.geometry()
+        info_dialog.move(rect.center() - info_dialog.rect().center())
+
+        # Set the window modality to be application modal
+        info_dialog.setWindowModality(Qt.ApplicationModal)
+
+        # Show the QDialog
+        info_dialog.exec_()
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
@@ -673,6 +804,7 @@ QTabBar::tab:hover {
     color: #303030; 
     cursor: pointer; 
 }
+
 
         """
         self.setStyleSheet(style_sheet)
