@@ -125,7 +125,7 @@ class TextEditor(QMainWindow):
         current_widget = self.tab_widget.currentWidget()
         if isinstance(current_widget, QTextEdit):
             content = current_widget.toPlainText()
-            word_count = len(re.findall(r'\b\w+\b', content))
+            word_count = len(re.findall(r'\b\w+\'?\w*\b', content))
             char_count = len(content)
             self.stats_label.setText(f"Word count: {word_count} | Character count: {char_count}")
         else:
