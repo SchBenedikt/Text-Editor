@@ -755,8 +755,8 @@ class TextEditor(QMainWindow):
             current_widget.setFocus()
 
     def open_new_tab(self):
-        options = ["New File", "Chat"]
-        selected_option, ok = QInputDialog.getItem(self, "New File or Chat?", "Choose an option:", options, 0, False)
+        options = ["New File", "Open File", "Chat"]
+        selected_option, ok = QInputDialog.getItem(self, "New File, Open File, or Chat?", "Choose an option:", options, 0, False)
 
         if ok:
             if selected_option == "New File":
@@ -769,19 +769,31 @@ class TextEditor(QMainWindow):
 
                 if fileName:
                     if fileName.endswith(".txt"):
-                        # If the selected file is a text file, open it in a new tab
                         self.open_text_file_in_tab(fileName)
                     elif fileName.endswith(".py"):
-                        # If the selected file is a Python file, open it in a new tab
                         self.open_python_file_in_tab(fileName)
                     else:
-                        # If it's another type of file, open it in a new tab
                         self.open_generic_file_in_tab(fileName)
                 else:
-                    # If no file was selected, open an empty tab
                     self.open_empty_tab()
+            elif selected_option == "Open File":
+                dialog = QFileDialog(self)
+                dialog.setFileMode(QFileDialog.ExistingFile)
+
+                options = QFileDialog.Options()
+                options |= QFileDialog.DontUseNativeDialog
+                fileName, _ = dialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
+
+                if fileName:
+                    if fileName.endswith(".txt"):
+                        self.open_text_file_in_tab(fileName)
+                    elif fileName.endswith(".py"):
+                        self.open_python_file_in_tab(fileName)
+                    else:
+                        self.open_generic_file_in_tab(fileName)
             elif selected_option == "Chat":
                 self.open_chat_tab()
+
     def open_chat_tab(self):
         chat_view = QWebEngineView()
         chat_view.setUrl(QUrl("https://platform.openai.com/"))
