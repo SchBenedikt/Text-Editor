@@ -18,7 +18,7 @@ from requests_oauthlib import OAuth2Session
 import threading
 from auth import app, github
 from urllib.parse import quote
-
+import codecs
 from base64 import b64decode
 
 
@@ -55,6 +55,8 @@ class TextEditor(QMainWindow):
         # Statistik-Label erstellen
         self.stats_label = QLabel("Word count: 0 | Character count: 0", self)
         self.status_bar.addWidget(self.stats_label)
+        self.line_number_label = QLabel()
+        self.statusBar().addPermanentWidget(self.line_number_label)
 
 
     def init_menu(self):
@@ -165,10 +167,19 @@ class TextEditor(QMainWindow):
             word_count = len(re.findall(r'\b\w+\'?\w*\b', content))
             char_count = len(content)
 
+            # Zeilennummer abrufen
+            cursor = current_widget.textCursor()
+            line_number = cursor.blockNumber() + 1  # BlockNumber() gibt 0-basierte Nummer zurück, daher +1
+
             # Statusleisteninformationen aktualisieren
             self.stats_label.setText(f"Word count: {word_count} | Character count: {char_count}")
+
+            # Zeilennummer ganz rechts in der Statusleiste anzeigen
+            self.line_number_label.setText(f"Line: {line_number}")
         else:
             self.stats_label.setText("")
+            self.line_number_label.setText("")
+
     def show_developer_action(self):
         developer_info_dialog = QDialog(self)
         developer_info_dialog.setWindowTitle("Entwickler")
@@ -233,7 +244,7 @@ class TextEditor(QMainWindow):
             latest_version = "vYYYY.MM.DD"  # Replace with a default version
 
         # Compare the latest version with the current version
-        current_version = "v2024.01.01"  # Replace with your actual version
+        current_version = "v2024.01.04"  # Replace with your actual version
 
         # Create a new QDialog for displaying version information
         info_dialog = QDialog(self)
@@ -336,23 +347,23 @@ class TextEditor(QMainWindow):
 
         toolbar.setIconSize(QSize(20, 20))
 
-        bold_action = QAction(QIcon("bold.png"), "Bold", self)
+        bold_action = QAction(QIcon("images/bold.png"), "Bold", self)
         bold_action.triggered.connect(self.bold_text)
         toolbar.addAction(bold_action)
 
-        italic_action = QAction(QIcon("italic.png"), "Italic", self)
+        italic_action = QAction(QIcon("images/italic.png"), "Italic", self)
         italic_action.triggered.connect(self.italic_text)
         toolbar.addAction(italic_action)
 
-        underline_action = QAction(QIcon("underline.png"), "Underline", self)
+        underline_action = QAction(QIcon("images/underline.png"), "Underline", self)
         underline_action.triggered.connect(self.underline_text)
         toolbar.addAction(underline_action)
 
-        increase_font_action = QAction(QIcon("increase_font.png"), "Increase Font Size", self)
+        increase_font_action = QAction(QIcon("images/increase_font.png"), "Increase Font Size", self)
         increase_font_action.triggered.connect(self.increase_font_size)
         toolbar.addAction(increase_font_action)
 
-        decrease_font_action = QAction(QIcon("decrease_font.png"), "Decrease Font Size", self)
+        decrease_font_action = QAction(QIcon("images/decrease_font.png"), "Decrease Font Size", self)
         decrease_font_action.triggered.connect(self.decrease_font_size)
         toolbar.addAction(decrease_font_action)
 
@@ -361,11 +372,11 @@ class TextEditor(QMainWindow):
         font_combobox.currentFontChanged.connect(self.change_font)
         toolbar.addWidget(font_combobox)
 
-        change_color_action = QAction(QIcon("change_color.png"), "Change Text Color", self)
+        change_color_action = QAction(QIcon("images/change_color.png"), "Change Text Color", self)
         change_color_action.triggered.connect(self.change_text_color)
         toolbar.addAction(change_color_action)
 
-        set_text_background_color = QAction(QIcon("change_bg_color.png"), "Change Background Color", self)
+        set_text_background_color = QAction(QIcon("images/change_bg_color.png"), "Change Background Color", self)
         set_text_background_color.triggered.connect(self.set_text_background_color)
         toolbar.addAction(set_text_background_color)
 
@@ -396,29 +407,171 @@ class TextEditor(QMainWindow):
             else:
                 QMessageBox.warning(self, "Open File", "Unable to open the file.")
 
-    def save_file(self):
-        current_widget = self.tab_widget.currentWidget()
-        content = current_widget.toPlainText()
-        file_path = getattr(current_widget, "file_path", None)
 
-        if file_path:
-            try:
-                with open(file_path, "w") as f:
-                    f.write(content)
-                self.set_tab_title(current_widget, file_path)
-                QMessageBox.information(self, "Save File", "File saved")
-            except:
-                QMessageBox.warning(self, "Save File", "Unable to save the file")
+    def save_file(self):
+        # Show a dialog to choose the save option
+        options = ['Save locally', 'Save on GitHub']
+        choice, ok = QInputDialog.getItem(self, 'Save Option', 'Choose a save option:', options, 0, False)
+
+        if ok:
+            current_widget = self.tab_widget.currentWidget()
+            content = current_widget.toPlainText()
+
+            if choice == 'Save locally':
+                self.save_locally(content)
+            elif choice == 'Save on GitHub':
+                if os.path.exists('upload_data.txt'):
+                    github_username, access_token = self.read_upload_data()
+                    repo_name = self.get_user_repository(github_username, access_token)
+                    if repo_name:
+                        self.save_to_github(content, github_username, access_token, repo_name)
+                    else:
+                        QMessageBox.warning(self, 'GitHub Save', 'No repositories found for the given GitHub username.')
+                else:
+                    self.ask_github_credentials_and_save(content)
+
+
+    def save_locally(self, content):
+        file_dialog = QFileDialog()
+        file_name, _ = file_dialog.getSaveFileName(self, "Save File Locally", "", "All Files (*)")
+
+        if file_name:
+            with open(file_name, "w") as f:
+                f.write(content)
+            QMessageBox.information(self, "Save Successful", "File saved locally successfully.")
+
+    def ask_github_credentials_and_save(self, content):
+        github_username, ok1 = QInputDialog.getText(self, 'GitHub Credentials', 'Enter your GitHub username:')
+        access_token, ok2 = QInputDialog.getText(self, 'GitHub Credentials', 'Enter your GitHub personal access token:')
+
+        if ok1 and ok2:
+            repositories = self.get_user_repositories(github_username, access_token)
+
+            if repositories:
+                repository_name, ok3 = QInputDialog.getItem(self, 'Select Repository', 'Choose a GitHub repository:', repositories, 0, False)
+
+                if ok3:
+                    with open('upload_data.txt', 'w') as file:
+                        file.write(f"{github_username}\n{access_token}\n{repository_name}")
+
+                    self.save_to_github(content, github_username, access_token, repository_name)
+                else:
+                    QMessageBox.warning(self, 'GitHub Save', 'No GitHub repository selected. Unable to save on GitHub.')
+            else:
+                QMessageBox.warning(self, 'GitHub Save', 'No repositories found for the given GitHub username.')
         else:
-            file, _ = QFileDialog.getSaveFileName(self, "Save File")
-            if file:
-                try:
-                    with open(file, "w") as f:
-                        f.write(content)
-                    self.set_tab_title(current_widget, file)  # Set the tab title
-                    QMessageBox.information(self, "Save File", "File saved successfully.")
-                except:
-                    QMessageBox.warning(self, "Save File", "Unable to save the file.")
+            QMessageBox.warning(self, 'GitHub Save', 'GitHub credentials not provided. Unable to save on GitHub.')
+    def get_user_repositories(self, github_username, access_token):
+        api_url = f"https://api.github.com/users/{github_username}/repos"
+        headers = {"Authorization": f"token {access_token}"}
+
+        try:
+            response = requests.get(api_url, headers=headers)
+            repositories = [repo['name'] for repo in response.json()]
+            return repositories
+        except requests.RequestException as e:
+            print(f"Error getting GitHub repositories: {e}")
+            return None
+
+
+    def save_to_github(self, content, github_username, access_token, repo_name):
+        # Show a dialog to input the desired file name for GitHub
+        custom_github_filename, ok = QInputDialog.getText(self, 'GitHub File Name', 'Enter the desired file name for GitHub (with extension):')
+
+        if ok and custom_github_filename:
+            api_url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{custom_github_filename}"
+            headers = {"Authorization": f"token {access_token}"}
+
+            data = {
+                "message": "Upload file via schBenedikt's Text Editor",
+                "content": codecs.encode(content.encode("utf-8"), "base64").decode("utf-8"),
+                "sha": self.get_sha_from_github(custom_github_filename, github_username, access_token, repo_name)
+            }
+
+            response = requests.put(api_url, headers=headers, json=data)
+
+            if response.status_code == 200:
+                print(f"File '{custom_github_filename}' uploaded to GitHub successfully.")
+            else:
+                print(f"Unable to upload file to GitHub. Status code: {response.status_code}, Message: {response.text}")
+
+    def get_user_repositories(self, github_username, access_token):
+        api_url = f"https://api.github.com/users/{github_username}/repos"
+        headers = {"Authorization": f"token {access_token}"}
+
+        try:
+            response = requests.get(api_url, headers=headers)
+            repositories = [repo['name'] for repo in response.json()]
+            return repositories
+        except requests.RequestException as e:
+            print(f"Error getting GitHub repositories: {e}")
+            return None
+
+    def get_user_repository(self, github_username, access_token):
+        repositories = self.get_user_repositories(github_username, access_token)
+        if repositories:
+            repository_name, ok = QInputDialog.getItem(self, 'Select Repository', 'Choose a GitHub repository:', repositories, 0, False)
+            if ok:
+                return repository_name
+        return None
+
+
+    def get_filename_from_path(self, file_path):
+        return os.path.basename(file_path)
+
+    def read_upload_data(self):
+        with open('upload_data.txt', 'r') as file:
+            lines = file.readlines()
+            github_username = lines[0].strip()
+            access_token = lines[1].strip()
+            return github_username, access_token
+
+
+    def upload_to_github(self, content, github_filename, github_username, access_token, repo_name):
+        # Extrahiere nur den Dateinamen aus dem vollständigen Pfad
+        github_filename = os.path.basename(github_filename)
+
+        api_url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{github_filename}"
+        headers = {"Authorization": f"token {access_token}"}
+
+        data = {
+            "message": "Update file via script",
+            "content": codecs.encode(content.encode("utf-8"), "base64").decode("utf-8"),
+            "sha": self.get_sha_from_github(github_filename, github_username, access_token, repo_name)
+        }
+
+        response = requests.put(api_url, headers=headers, json=data)
+
+        if response.status_code == 200:
+            print(f"File '{github_filename}' uploaded to GitHub successfully.")
+        else:
+            print(f"Unable to upload file to GitHub. Status code: {response.status_code}, Message: {response.text}")
+
+    def get_sha_from_github(self, github_filename, github_username, access_token, repo_name):
+        api_url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{github_filename}"
+        headers = {"Authorization": f"token {access_token}"}
+
+        response = requests.get(api_url, headers=headers)
+
+        if response.status_code == 200:
+            sha = response.json().get("sha")
+            return sha
+        else:
+            print(f"Unable to get SHA from GitHub. Status code: {response.status_code}, Message: {response.text}")
+            return None
+
+    def load_github_credentials(self):
+        # Read GitHub credentials from upload_data.txt
+        try:
+            with open('upload_data.txt', 'r') as file:
+                lines = file.readlines()
+                github_username = lines[0].strip()
+                access_token = lines[1].strip()
+                repo_name = lines[2].strip()
+                return github_username, access_token, repo_name
+        except FileNotFoundError:
+            print("upload_data.txt not found.")
+            return None, None, None
 
     def set_tab_title(self, text_widget, file_path):
         # Set the tab title to the file name
