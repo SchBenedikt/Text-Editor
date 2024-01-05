@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from docx import Document
 from docx.shared import Pt, RGBColor
 import os
@@ -44,13 +46,53 @@ class TextEditor(QMainWindow):
         self.init_menu()
         self.init_toolbar()
         self.init_tab_bar()
-        self.open_new_tab()
+        self.open_empty_tab()
         self.text_area = QTextEdit()
 
-        self.set_style_options()
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        # Statistik-Label erstellen
+        self.stats_label = QLabel("Word count: 0 | Character count: 0", self)
+        self.status_bar.addWidget(self.stats_label)
+
+        #predefine the fonts
+        self.fontsize = 12
+        self.fontcolor = ['0','0','0']
+        self.fontcolor_bg = ['255','255','255']
+        self.font = 'Times New Roman'
+
 
     def init_menu(self):
         menubar = self.menuBar()
+        # Infos-Menü
+        info_menu = menubar.addMenu('Infos')
+        developer_action = QAction('Developer', self)
+        developer_action.triggered.connect(self.show_developer_action)
+        info_menu.addAction(developer_action)
+
+        about_action = QAction('About', self)
+        about_action.triggered.connect(self.show_info_dock)
+        info_menu.addAction(about_action)
+
+        # QDockWidget für Infos erstellen
+        self.info_dock = QDockWidget("Infos", self)
+        self.info_dock.setAllowedAreas(Qt.BottomDockWidgetArea)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.info_dock)
+
+        # Layout für den Inhalt des QDockWidget erstellen
+        dock_content = QWidget()
+        dock_layout = QVBoxLayout(dock_content)
+        self.label_word_count = QLabel()
+        self.label_char_count = QLabel()
+        dock_layout.addWidget(self.label_word_count)
+        dock_layout.addWidget(self.label_char_count)
+
+        # QDockWidget mit dem Layout verbinden
+        self.info_dock.setWidget(dock_content)
+
+        # Das QDockWidget initial verstecken
+        self.info_dock.hide()
 
         file_menu = menubar.addMenu("File")
         open_action = QAction("Open", self)
@@ -58,10 +100,12 @@ class TextEditor(QMainWindow):
         file_menu.addAction(open_action)
 
         new_tab_action = QAction("New Tab", self)
+        new_tab_action.setShortcut(QKeySequence("Ctrl+T"))
         new_tab_action.triggered.connect(self.open_new_tab)
         file_menu.addAction(new_tab_action)
 
         search_action = QAction("Search Word", self)
+        search_action.setShortcut(QKeySequence("Ctrl+F"))
         search_action.triggered.connect(self.show_search_dialog)
         file_menu.addAction(search_action)
 
@@ -71,6 +115,7 @@ class TextEditor(QMainWindow):
 
         save_menu = menubar.addMenu("Save")
         save_action = QAction("Save", self)
+        save_action.setShortcut(QKeySequence("Ctrl+S"))
         save_action.triggered.connect(self.save_file)
         save_menu.addAction(save_action)
 
@@ -82,18 +127,223 @@ class TextEditor(QMainWindow):
         export_txt_action.triggered.connect(self.export_as_txt)
         save_menu.addAction(export_txt_action)
 
+        print_action = QAction("Print", self)
+        print_action.setShortcut(QKeySequence("Ctrl+P"))
+        print_action.triggered.connect(self.print_document)
+        save_menu.addAction(print_action)
+
+        edit_menu = menubar.addMenu("Edit")
+
+        settings_action = QAction("Editor Settings", self)
+        settings_action.setShortcut(QKeySequence("Ctrl+I"))
+        settings_action.triggered.connect(self.show_settings)
+        edit_menu.addAction(settings_action)
+
+        undo_action = QAction("Undo", self)
+        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.triggered.connect(self.undo)
+        edit_menu.addAction(undo_action)
+
+        redo_action = QAction("Redo", self)
+        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.triggered.connect(self.redo)
+        edit_menu.addAction(redo_action)
+
+        # Move "Login" action to the "Projects" menu
+        projects_menu = menubar.addMenu("Projects")
         login_action = QAction("Login", self)
         login_action.triggered.connect(self.start_webserver)
-        file_menu.addAction(login_action)
+        projects_menu.addAction(login_action)
 
         projects = self.load_projects()
+        if projects:
+            # Add a separator between "Login" and the projects
+            projects_menu.addSeparator()
+
+        self.set_style_options()
 
         # Add projects to the menu
-        projects_menu = menubar.addMenu("Projects")
         for project in projects:
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
+
+    def update_status_bar(self):
+        current_widget = self.tab_widget.currentWidget()
+        if isinstance(current_widget, QTextEdit):
+            content = current_widget.toPlainText()
+
+            # Word und Zeichen zählen (Apostrophe als Teil eines Worts berücksichtigen)
+            word_count = len(re.findall(r'\b\w+\'?\w*\b', content))
+            char_count = len(content)
+
+            # Statusleisteninformationen aktualisieren
+            self.stats_label.setText(f"Word count: {word_count} | Character count: {char_count}")
+        else:
+            self.stats_label.setText("")
+
+    def show_settings(self):
+        settings_dialogue = QDialog(self)
+        settings_dialogue.setWindowTitle("Editor Settings")
+
+        # Replace the following placeholder variables with your actual variables
+        cursor = QTextCursor()  # Placeholder for your QTextCursor object
+        table = QTableWidget()  # Placeholder for your QTableWidget object
+        try:
+            with open('settings.txt', mode='r') as file: #read from the original settings file
+                settings = file.read().split('\n')
+        except Exception as e:
+            print(e)
+            with open('settings.txt',mode='w') as file:#if the file does not exist then create it
+                self.save_settings([0,0,0], [255,255,255], 12, 'Times New Roman')
+        color_btn = QPushButton("Choose Color")
+        bgcolor_btn = QPushButton("Choose Background Color")
+        fontsize_input = QLineEdit(str(settings[2]))
+        font_btn = QPushButton("Choose Font")
+
+        color_btn.clicked.connect(lambda: self.change_text_color())
+        bgcolor_btn.clicked.connect(lambda: self.set_text_background_color())
+        font_btn.clicked.connect(lambda: self.change_font())
+
+        form_layout = QFormLayout()
+        form_layout.addRow("Text Color:", color_btn)
+        form_layout.addRow("Background Color:", bgcolor_btn)
+        form_layout.addRow("Font Size:", fontsize_input)
+        form_layout.addRow("Font:", font_btn)
+        print(color_btn.fontMetrics(),'aaa')
+        save_btn = QPushButton("Save Settings")
+        save_btn.clicked.connect(lambda: self.save_settings(settings_dialogue,self.fontcolor, self.fontcolor_bg, self.fontsize, self.font))
+
+        layout = QVBoxLayout()
+        layout.addLayout(form_layout)
+        layout.addWidget(save_btn)
+
+        settings_dialogue.setLayout(layout)
+
+        # Tabelle soll die gesamte Breite des Dialogs einnehmen
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+
+        rect = self.geometry()
+        settings_dialogue.move(rect.center() - settings_dialogue.rect().center())
+
+        settings_dialogue.setWindowModality(Qt.ApplicationModal)
+
+        settings_dialogue.exec_()
+
+    def save_settings(self, settings, color, bgcolor, fontsize, font):
+        with open('settings.txt', mode='w') as file:
+            print(color,bgcolor,fontsize)
+            file.write(','.join(color))
+            file.write('\n')
+            file.write(','.join(bgcolor))
+            file.write('\n')
+            file.write(str(fontsize))
+            file.write('\n')
+            file.write(font)
+
+        settings.accept()
+
+
+    def show_developer_action(self):
+        developer_info_dialog = QDialog(self)
+        developer_info_dialog.setWindowTitle("Entwickler")
+
+        # GitHub-Repository-Informationen
+        repo_owner = "SchBenedikt"
+        repo_name = "Text-Editor"
+        repo_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contributors"
+
+        # Anfrage an die GitHub-API senden
+        response = requests.get(repo_url)
+        if response.status_code == 200:
+            contributors = response.json()
+
+            # QTableWidget für die Entwicklerinformationen erstellen
+            table = QTableWidget()
+            table.setRowCount(len(contributors))
+            table.setColumnCount(1)  # Eine Spalte für den Benutzernamen
+            table.setHorizontalHeaderLabels(["Username"])
+
+            # Tabelle mit Daten füllen
+            for row, contributor in enumerate(contributors):
+                username = contributor.get("login", "Unknown")
+
+                # Daten in die Tabelle einfügen
+                table.setItem(row, 0, QTableWidgetItem(username))
+
+            # Tabelle zum Layout des Dialogs hinzufügen
+            layout = QVBoxLayout(developer_info_dialog)
+            layout.addWidget(table)
+
+            # Tabelle an die Größe des Inhalts anpassen
+            table.resizeColumnsToContents()
+
+            # Die Bearbeitung der Zellen in der Tabelle deaktivieren
+            table.setEditTriggers(QTableWidget.NoEditTriggers)
+
+            # Tabelle soll die gesamte Breite des Dialogs einnehmen
+            header = table.horizontalHeader()
+            header.setSectionResizeMode(0, QHeaderView.Stretch)
+
+            # Das Dialogfenster in der Mitte des Hauptfensters positionieren
+            rect = self.geometry()
+            developer_info_dialog.move(rect.center() - developer_info_dialog.rect().center())
+
+            # Die Modalität des Fensters auf Anwendungsmodalität setzen
+            developer_info_dialog.setWindowModality(Qt.ApplicationModal)
+
+            # Das QDialog anzeigen
+            developer_info_dialog.exec_()
+
+    def show_info_dock(self):
+        # Replace with your actual repository and author
+        repo_owner = "SchBenedikt"
+        repo_name = "Text-Editor"
+
+        # Fetch the latest release information from GitHub
+        release_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+        response = requests.get(release_url)
+        if response.status_code == 200:
+            latest_version = response.json().get("tag_name", "vYYYY.MM.DD")  # Replace with a default version
+        else:
+            latest_version = "vYYYY.MM.DD"  # Replace with a default version
+
+        # Compare the latest version with the current version
+        current_version = "v2024.01.01"  # Replace with your actual version
+
+        # Create a new QDialog for displaying version information
+        info_dialog = QDialog(self)
+        info_dialog.setWindowTitle("About")
+
+        # Create QLabel widgets for displaying version information
+        if latest_version != current_version:
+            label_version = QLabel(f"Current Version: {current_version}\n\nNew Version: {latest_version}", info_dialog)
+            button_open_release = QPushButton("New release available", info_dialog)
+            button_open_release.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(release_url)))
+        else:
+            label_version = QLabel(f"{current_version}", info_dialog)
+            button_open_release = None
+
+        # Add widgets to layout
+        layout = QVBoxLayout(info_dialog)
+        layout.addWidget(label_version)
+        if button_open_release:
+            layout.addWidget(button_open_release)
+
+        # Adjust the size of the window based on its contents plus 10 pixels
+        info_dialog.adjustSize()
+        info_dialog.setFixedSize(info_dialog.width() + 10, info_dialog.height() + 10)
+
+        # Center the dialog on the main window
+        rect = self.geometry()
+        info_dialog.move(rect.center() - info_dialog.rect().center())
+
+        # Set the window modality to be application modal
+        info_dialog.setWindowModality(Qt.ApplicationModal)
+
+        # Show the QDialog
+        info_dialog.exec_()
 
     def open_project(self, project):
         username = get_username_from_about_file()
@@ -150,6 +400,14 @@ class TextEditor(QMainWindow):
         # Open web browser to localhost:5000
         url = "http://localhost:5000"
         webbrowser.open(url)
+
+    def undo(self):
+        current_widget = self.tab_widget.currentWidget()
+        current_widget.undo()
+
+    def redo(self):
+        current_widget = self.tab_widget.currentWidget()
+        current_widget.redo()
 
     def init_toolbar(self):
         toolbar = QToolBar(self)
@@ -219,15 +477,26 @@ class TextEditor(QMainWindow):
     def save_file(self):
         current_widget = self.tab_widget.currentWidget()
         content = current_widget.toPlainText()
-        file, _ = QFileDialog.getSaveFileName(self, "Save File")
-        if file:
+        file_path = getattr(current_widget, "file_path", None)
+
+        if file_path:
             try:
-                with open(file, "w") as f:
+                with open(file_path, "w") as f:
                     f.write(content)
-                self.set_tab_title(current_widget, file)  # Set the tab title
-                QMessageBox.information(self, "Save File", "File saved successfully.")
+                self.set_tab_title(current_widget, file_path)
+                QMessageBox.information(self, "Save File", "File saved")
             except:
-                QMessageBox.warning(self, "Save File", "Unable to save the file.")
+                QMessageBox.warning(self, "Save File", "Unable to save the file")
+        else:
+            file, _ = QFileDialog.getSaveFileName(self, "Save File")
+            if file:
+                try:
+                    with open(file, "w") as f:
+                        f.write(content)
+                    self.set_tab_title(current_widget, file)  # Set the tab title
+                    QMessageBox.information(self, "Save File", "File saved successfully.")
+                except:
+                    QMessageBox.warning(self, "Save File", "Unable to save the file.")
 
     def set_tab_title(self, text_widget, file_path):
         # Set the tab title to the file name
@@ -275,7 +544,7 @@ class TextEditor(QMainWindow):
             rgb_color = QColor(font_format["color"])
             # font.color.rgb = rgb_color.rgb()
             font.color.rgb = RGBColor(rgb_color.red(), rgb_color.green(), rgb_color.blue())
-        font.size = Pt(15)
+        font.size = Pt(12)
 
     def get_runs_with_formatting(self, text_widget):
         # cursor = QTextCursor(self.text_area.document())
@@ -299,22 +568,11 @@ class TextEditor(QMainWindow):
             start += 1
         return runs
 
-    def closeEvent(self, event):
-        current_widget = self.tab_widget.currentWidget()
-        if self.is_unsaved_changes(current_widget):
-            reply = QMessageBox.question(self, "Unsaved Changes",
-                                         "There are unsaved changes. Do you want to save before exiting?",
-                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            if reply == QMessageBox.Save:
-                self.save_file()
-            elif reply == QMessageBox.Cancel:
-                event.ignore()
-                return
-        event.accept()
-
     def is_unsaved_changes(self, text_widget):
-        content = text_widget.toPlainText()
-        return content != "" and content != self.get_file_content(text_widget)
+        if isinstance(text_widget, QTextEdit):  # Check if text_widget is a QTextEdit instance
+            content = text_widget.toPlainText()
+            return content != "" and content != self.get_file_content(text_widget)
+        return False
 
     def get_file_content(self, text_widget):
         file_path = getattr(text_widget, "file_path", None)
@@ -381,6 +639,20 @@ class TextEditor(QMainWindow):
         cursor.mergeCharFormat(format)
         current_widget.setFocus()
 
+    def set_font_size(self, size):
+        current_widget = self.tab_widget.currentWidget()
+        cursor = current_widget.textCursor()
+        format = cursor.charFormat()
+        font = format.font()
+        font_size = font.pointSize()
+        font_size = size
+        font.setPointSize(font_size)
+        format.setFont(font)
+        cursor.mergeCharFormat(format)
+        current_widget.setFocus()
+
+        self.fontsize = size
+
     def change_font(self, font):
         current_widget = self.tab_widget.currentWidget()
         text_cursor = current_widget.textCursor()
@@ -390,27 +662,41 @@ class TextEditor(QMainWindow):
         format.setFontFamily(font_name)
         text_cursor.mergeCharFormat(format)
         current_widget.setFocus()
+        self.font = font_name
 
-    def change_text_color(self):
-        print("Before opening color dialog")
-        color = QColorDialog.getColor(parent=self)
-        print("After opening color dialog")
 
-        if color.isValid():
+    def change_text_color(self,color=False):
+        if color == False:
+            print("Before opening color dialog")
+            color = QColorDialog.getColor(parent=self)
+            print("After opening color dialog")
+
+            if color.isValid():
+                current_widget = self.tab_widget.currentWidget()
+                cursor = current_widget.textCursor()
+                format = cursor.charFormat()
+                print(f"Cursor: {cursor}")
+                print(f"Format: {format}")
+
+                print(f"Color: {color}")
+                format.setForeground(color)
+                print(f"Foreground color: {format.foreground()}")
+
+                cursor.mergeCharFormat(format)
+                current_widget.setFocus()
+
+                self.fontcolor = [str(color.red()),str(color.green()),str(color.blue())]
+            elif not color.isValid():
+                print("Invalid color")
+        else:
             current_widget = self.tab_widget.currentWidget()
             cursor = current_widget.textCursor()
             format = cursor.charFormat()
-            print(f"Cursor: {cursor}")
-            print(f"Format: {format}")
-
-            print(f"Color: {color}")
-            format.setForeground(color)
-            print(f"Foreground color: {format.foreground()}")
-
+            format.setForeground(QColor(color[0],color[1],color[2]))
             cursor.mergeCharFormat(format)
             current_widget.setFocus()
-        elif not color.isValid():
-            print("Invalid color")
+
+
 
 
     def set_text_background_color(self, color):
@@ -423,15 +709,86 @@ class TextEditor(QMainWindow):
             cursor.mergeCharFormat(format)
             current_widget.setFocus()
 
+            self.fontcolor_bg = [str(color.red()),str(color.green()),str(color.blue())]
+
     def open_new_tab(self):
+        options = ["New File", "Chat"]
+        selected_option, ok = QInputDialog.getItem(self, "New File or Chat?", "Choose an option:", options, 0, False)
+
+        if ok:
+            if selected_option == "New File":
+                dialog = QFileDialog(self)
+                dialog.setFileMode(QFileDialog.AnyFile)
+
+                options = QFileDialog.Options()
+                options |= QFileDialog.DontUseNativeDialog
+                fileName, _ = dialog.getSaveFileName(self, "New File", "",
+                                                     "All Files (*);;Text Files (*.txt);;Python Files (*.py)",
+                                                     options=options)
+
+                if fileName:
+                    if fileName.endswith(".txt"):
+                        # If the selected file is a text file, open it in a new tab
+                        self.open_text_file_in_tab(fileName)
+                    elif fileName.endswith(".py"):
+                        # If the selected file is a Python file, open it in a new tab
+                        self.open_python_file_in_tab(fileName)
+                    else:
+                        # If it's another type of file, open it in a new tab
+                        self.open_generic_file_in_tab(fileName)
+                else:
+                    # If no file was selected, open an empty tab
+                    self.open_empty_tab()
+            elif selected_option == "Chat":
+                self.open_chat_tab()
+
+    def open_chat_tab(self):
+        chat_view = QWebEngineView()
+        chat_view.setUrl(QUrl("https://platform.openai.com/"))
+        chat_widget = QWidget()
+        layout = QVBoxLayout(chat_widget)
+        layout.addWidget(chat_view)
+
+        self.tab_widget.addTab(chat_widget, "Chat")
+
+    def open_text_file_in_tab(self, file_path):
+        with open(file_path, "r") as file:
+            content = file.read()
+
         text_area = QTextEdit()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
+        text_area.setPlainText(content)
+        self.tab_widget.addTab(text_area, os.path.basename(file_path))
+        self.tab_widget.setCurrentWidget(text_area)
+
+    def open_python_file_in_tab(self, file_path):
+        # Implementiere entsprechende Logik, um Python-Dateien zu öffnen
+        pass
+
+    def open_generic_file_in_tab(self, file_path):
+        # Implementiere entsprechende Logik, um generische Dateien zu öffnen
+        pass
+
+    def open_empty_tab(self):
+        text_area = QTextEdit()
+        text_area.setFont(QFont("TkDefaultFont"))
+        text_area.textChanged.connect(self.update_tab_title)
+        text_area.textChanged.connect(self.update_status_bar)
+        self.tab_widget.addTab(text_area, "Untitled")
+        self.tab_widget.setCurrentWidget(text_area)
+
+    def open_new_empty_tab(self):
+        text_area = QTextEdit()
+        text_area.setFont(QFont("TkDefaultFont"))
+        text_area.textChanged.connect(self.update_tab_title)
+        text_area.textChanged.connect(self.update_status_bar)
         self.tab_widget.addTab(text_area, "Untitled")
         self.tab_widget.setCurrentWidget(text_area)
 
     def close_tab(self, index):
         text_area = self.tab_widget.widget(index)
+
         if self.is_unsaved_changes(text_area):
             reply = QMessageBox.question(self, "Unsaved Changes",
                                          "There are unsaved changes. Do you want to save before closing the tab?",
@@ -440,7 +797,26 @@ class TextEditor(QMainWindow):
                 self.save_file()
             elif reply == QMessageBox.Cancel:
                 return
+
         self.tab_widget.removeTab(index)
+
+    def closeEvent(self, event):
+        current_widget = self.tab_widget.currentWidget()
+        if self.is_unsaved_changes(current_widget):
+            reply = QMessageBox.question(self, "Unsaved Changes",
+                                         "There are unsaved changes. Do you want to save before exiting?",
+                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            if reply == QMessageBox.Save:
+                self.save_file()
+            elif reply == QMessageBox.Cancel:
+                event.ignore()
+                return
+        event.accept()
+
+        # Check if it's the last tab being closed
+        if self.tab_widget.count() == 0:
+            # Close the entire application
+            self.close()
 
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
@@ -459,6 +835,15 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(current_index, file_name)
             else:
                 self.tab_widget.setTabText(current_index, "Untitled")
+
+    def print_document(self):
+        printer = QPrinter(QPrinter.HighResolution)
+        printer.setPageSize(QPrinter.A4)
+
+        dialog = QPrintDialog(printer, self)
+        if dialog.exec_() == QPrintDialog.Accepted:
+            current_widget = self.tab_widget.currentWidget()
+            current_widget.print_(printer)
 
     def search_word(self, word):
         current_widget = self.tab_widget.currentWidget()
