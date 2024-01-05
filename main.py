@@ -301,8 +301,6 @@ class TextEditor(QMainWindow):
                         # Decode the base64-encoded content
                         content = b64decode(content_response.json()["content"]).decode("utf-8")
 
-                        # Open the content in a new tab in the text editor
-                        self.open_new_tab()
                         current_widget = self.tab_widget.currentWidget()
                         current_widget.setPlainText(content)
                         self.set_tab_title(current_widget, selected_file)
