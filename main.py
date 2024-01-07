@@ -323,13 +323,13 @@ class TextEditor(QMainWindow):
 
     def start_webserver(self):
         def run_flask_app():
-            app.run(host="localhost", port=5000)
+            app.run(host="127.0.0.1", port=5000)
 
         flask_thread = threading.Thread(target=run_flask_app)
         flask_thread.start()
 
         # Open web browser to localhost:5000
-        url = "http://localhost:5000"
+        url = "http://127.0.0.1:5000"
         webbrowser.open(url)
     def undo(self):
         current_widget = self.tab_widget.currentWidget()
