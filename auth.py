@@ -4,9 +4,9 @@ from authlib.integrations.flask_client import OAuth
 import os
 import sys
 import threading
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt
 
 
 

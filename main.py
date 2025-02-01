@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWebEngineWidgets import *
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt6.QtWidgets import *
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+from PyQt6.QtWebEngineWidgets import *
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from docx import Document
 from docx.shared import Pt, RGBColor
 import os
@@ -73,8 +73,8 @@ class TextEditor(QMainWindow):
 
         # QDockWidget für Infos erstellen
         self.info_dock = QDockWidget("Infos", self)
-        self.info_dock.setAllowedAreas(Qt.BottomDockWidgetArea)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.info_dock)
+        self.info_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.info_dock)
 
         # Layout für den Inhalt des QDockWidget erstellen
         dock_content = QWidget()
@@ -107,7 +107,7 @@ class TextEditor(QMainWindow):
         file_menu.addAction(search_action)
 
         exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(qApp.quit)
+        exit_action.triggered.connect(QApplication.quit)
         file_menu.addAction(exit_action)
 
         save_menu = menubar.addMenu("Save")
@@ -131,12 +131,12 @@ class TextEditor(QMainWindow):
 
         edit_menu = menubar.addMenu("Edit")
         undo_action = QAction("Undo", self)
-        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         undo_action.triggered.connect(self.undo)
         edit_menu.addAction(undo_action)
 
         redo_action = QAction("Redo", self)
-        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         redo_action.triggered.connect(self.redo)
         edit_menu.addAction(redo_action)
 
@@ -215,21 +215,21 @@ class TextEditor(QMainWindow):
             table.resizeColumnsToContents()
 
             # Die Bearbeitung der Zellen in der Tabelle deaktivieren
-            table.setEditTriggers(QTableWidget.NoEditTriggers)
+            table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
             # Tabelle soll die gesamte Breite des Dialogs einnehmen
             header = table.horizontalHeader()
-            header.setSectionResizeMode(0, QHeaderView.Stretch)
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
 
             # Das Dialogfenster in der Mitte des Hauptfensters positionieren
             rect = self.geometry()
             developer_info_dialog.move(rect.center() - developer_info_dialog.rect().center())
 
             # Die Modalität des Fensters auf Anwendungsmodalität setzen
-            developer_info_dialog.setWindowModality(Qt.ApplicationModal)
+            developer_info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
 
             # Das QDialog anzeigen
-            developer_info_dialog.exec_()
+            developer_info_dialog.exec()
     def show_info_dock(self):
         # Replace with your actual repository and author
         repo_owner = "SchBenedikt"
@@ -274,10 +274,10 @@ class TextEditor(QMainWindow):
         info_dialog.move(rect.center() - info_dialog.rect().center())
 
         # Set the window modality to be application modal
-        info_dialog.setWindowModality(Qt.ApplicationModal)
+        info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         # Show the QDialog
-        info_dialog.exec_()
+        info_dialog.exec()
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
@@ -886,12 +886,12 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(current_index, "Untitled")
     def print_document(self):
         printer = QPrinter(QPrinter.HighResolution)
-        printer.setPageSize(QPrinter.A4)
+        printer.setPageSize(QPrinter.PageSize.A4)
 
         dialog = QPrintDialog(printer, self)
-        if dialog.exec_() == QPrintDialog.Accepted:
+        if dialog.exec() == QPrintDialog.Accepted:
             current_widget = self.tab_widget.currentWidget()
-            current_widget.print_(printer)
+            current_widget.print(printer)
     def search_word(self, word):
         current_widget = self.tab_widget.currentWidget()
         text_edit = current_widget
@@ -982,4 +982,4 @@ if __name__ == "__main__":
     window = TextEditor()
     window.show()
 
-    sys.exit(app_pyqt.exec_())
+    sys.exit(app_pyqt.exec())

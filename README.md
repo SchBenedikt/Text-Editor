@@ -1,5 +1,5 @@
 # Text-Editor
-A text editor programmed with Python and PyQt5 with integration to Microsoft Word.<br>
+A text editor programmed with Python and PyQt6 with integration to Microsoft Word.<br>
 **Read WIKI for full instruction turorial + features**
 # 🛫Get started
 This repository contains the code for a simple text editor implemented in Python. The text editor allows users to open, save, and export files, as well as apply formatting such as bold, italic, and underline. This post provides instructions on how to test the text editor.
