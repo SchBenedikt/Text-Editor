@@ -914,35 +914,44 @@ class TextEditor(QMainWindow):
         if dialog.exec() == QPrintDialog.Accepted:
             current_widget = self.tab_widget.currentWidget()
             current_widget.print(printer)
-    def search_word(self, word):
-        current_widget = self.tab_widget.currentWidget()
-        text_edit = current_widget
+    def search_word(self, word: str):
+        current_widget: QWidget = self.tab_widget.currentWidget()
+        text_edit: QTextEdit = current_widget
+        
         cursor = QTextCursor(text_edit.document())
-
+        
         if cursor.hasSelection():
             cursor.clearSelection()
-
+        
         found = False
         while True:
             cursor = text_edit.document().find(word, cursor)
-
+            
             if cursor.isNull():
                 break
-
+            
             found = True
-
-            cursor.select(QTextCursor.WordUnderCursor)
+            
+            cursor.select(QTextCursor.SelectionType.WordUnderCursor)
             text_edit.setTextCursor(cursor)
             text_edit.ensureCursorVisible()
-
-            reply = QMessageBox.question(self, "Word Found",
-                                         f"The word '{word}' was found in the document. Do you want to continue searching?",
-                                         QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.No:
+            
+            reply = QMessageBox.question(
+                self,
+                "Word Found",
+                f"The word '{word}' was found in the document. Do you want to continue searching?",
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.No:
                 break
-
+        
         if not found:
-            QMessageBox.information(self, "Word Not Found", f"The word '{word}' was not found in the document.")
+            QMessageBox.information(
+                self,
+                "Word Not Found",
+                f"The word '{word}' was not found in the document."
+            )
 
     def show_search_dialog(self):
         word, ok = QInputDialog.getText(self, "Search Word", "Enter the word to search:")
