@@ -841,12 +841,18 @@ class TextEditor(QMainWindow):
         text_area = self.tab_widget.widget(index)
 
         if self.is_unsaved_changes(text_area):
-            reply = QMessageBox.question(self, "Unsaved Changes",
-                                         "There are unsaved changes. Do you want to save before closing the tab?",
-                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            if reply == QMessageBox.Save:
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "There are unsaved changes. Do you want to save before closing the tab?",
+                QMessageBox.StandardButton.Save |
+                QMessageBox.StandardButton.Discard |
+                QMessageBox.StandardButton.Cancel
+            )
+
+            if reply == QMessageBox.StandardButton.Save:
                 self.save_file()
-            elif reply == QMessageBox.Cancel:
+            elif reply == QMessageBox.StandardButton.Cancel:
                 return
 
         self.tab_widget.removeTab(index)
