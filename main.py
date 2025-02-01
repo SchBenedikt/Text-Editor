@@ -761,11 +761,15 @@ class TextEditor(QMainWindow):
         if ok:
             if selected_option == "New File":
                 dialog = QFileDialog(self)
-                dialog.setFileMode(QFileDialog.AnyFile)
+                dialog.setFileMode(QFileDialog.FileMode.AnyFile)
 
-                options = QFileDialog.Options()
-                options |= QFileDialog.DontUseNativeDialog
-                fileName, _ = dialog.getSaveFileName(self, "New File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
+                options = QFileDialog.Option.DontUseNativeDialog
+                fileName, _ = dialog.getSaveFileName(
+                    self,
+                    "New File", 
+                    "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", 
+                    options=options
+                )
 
                 if fileName:
                     if fileName.endswith(".txt"):
@@ -778,11 +782,16 @@ class TextEditor(QMainWindow):
                     self.open_empty_tab()
             elif selected_option == "Open File":
                 dialog = QFileDialog(self)
-                dialog.setFileMode(QFileDialog.ExistingFile)
+                dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
 
-                options = QFileDialog.Options()
-                options |= QFileDialog.DontUseNativeDialog
-                fileName, _ = dialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
+                options = QFileDialog.Option.DontUseNativeDialog
+                fileName, _ = dialog.getOpenFileName(
+                    self, 
+                    "Open File", 
+                    "", 
+                    "All Files (*);;Text Files (*.txt);;Python Files (*.py)", 
+                    options=options
+                )
 
                 if fileName:
                     if fileName.endswith(".txt"):
