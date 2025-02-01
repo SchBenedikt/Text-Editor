@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWebEngineWidgets import *
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt6.QtWidgets import *
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+from PyQt6.QtWebEngineWidgets import *
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from docx import Document
 from docx.shared import Pt, RGBColor
 import os
@@ -73,8 +73,8 @@ class TextEditor(QMainWindow):
 
         # QDockWidget für Infos erstellen
         self.info_dock = QDockWidget("Infos", self)
-        self.info_dock.setAllowedAreas(Qt.BottomDockWidgetArea)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.info_dock)
+        self.info_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.info_dock)
 
         # Layout für den Inhalt des QDockWidget erstellen
         dock_content = QWidget()
@@ -107,7 +107,7 @@ class TextEditor(QMainWindow):
         file_menu.addAction(search_action)
 
         exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(qApp.quit)
+        exit_action.triggered.connect(QApplication.quit)
         file_menu.addAction(exit_action)
 
         save_menu = menubar.addMenu("Save")
@@ -131,12 +131,12 @@ class TextEditor(QMainWindow):
 
         edit_menu = menubar.addMenu("Edit")
         undo_action = QAction("Undo", self)
-        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         undo_action.triggered.connect(self.undo)
         edit_menu.addAction(undo_action)
 
         redo_action = QAction("Redo", self)
-        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         redo_action.triggered.connect(self.redo)
         edit_menu.addAction(redo_action)
 
@@ -215,21 +215,21 @@ class TextEditor(QMainWindow):
             table.resizeColumnsToContents()
 
             # Die Bearbeitung der Zellen in der Tabelle deaktivieren
-            table.setEditTriggers(QTableWidget.NoEditTriggers)
+            table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
             # Tabelle soll die gesamte Breite des Dialogs einnehmen
             header = table.horizontalHeader()
-            header.setSectionResizeMode(0, QHeaderView.Stretch)
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
 
             # Das Dialogfenster in der Mitte des Hauptfensters positionieren
             rect = self.geometry()
             developer_info_dialog.move(rect.center() - developer_info_dialog.rect().center())
 
             # Die Modalität des Fensters auf Anwendungsmodalität setzen
-            developer_info_dialog.setWindowModality(Qt.ApplicationModal)
+            developer_info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
 
             # Das QDialog anzeigen
-            developer_info_dialog.exec_()
+            developer_info_dialog.exec()
     def show_info_dock(self):
         # Replace with your actual repository and author
         repo_owner = "SchBenedikt"
@@ -274,10 +274,10 @@ class TextEditor(QMainWindow):
         info_dialog.move(rect.center() - info_dialog.rect().center())
 
         # Set the window modality to be application modal
-        info_dialog.setWindowModality(Qt.ApplicationModal)
+        info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         # Show the QDialog
-        info_dialog.exec_()
+        info_dialog.exec()
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
@@ -623,14 +623,14 @@ class TextEditor(QMainWindow):
         # cursor = QTextCursor(self.text_area.document())
         cursor = QTextCursor(text_widget.document())
         cursor.setPosition(0)
-        cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
+        cursor.movePosition(QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor)
         selected_text = cursor.selection().toPlainText()
 
         runs = []
         start = 0
         for char in selected_text:
             cursor.setPosition(start)
-            cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
+            cursor.movePosition(QTextCursor.MoveOperation.NextCharacter, QTextCursor.MoveMode.KeepAnchor)
             char_format = cursor.charFormat()
             runs.append((char, {
                 "bold": char_format.font().bold(),
@@ -761,11 +761,15 @@ class TextEditor(QMainWindow):
         if ok:
             if selected_option == "New File":
                 dialog = QFileDialog(self)
-                dialog.setFileMode(QFileDialog.AnyFile)
+                dialog.setFileMode(QFileDialog.FileMode.AnyFile)
 
-                options = QFileDialog.Options()
-                options |= QFileDialog.DontUseNativeDialog
-                fileName, _ = dialog.getSaveFileName(self, "New File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
+                options = QFileDialog.Option.DontUseNativeDialog
+                fileName, _ = dialog.getSaveFileName(
+                    self,
+                    "New File", 
+                    "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", 
+                    options=options
+                )
 
                 if fileName:
                     if fileName.endswith(".txt"):
@@ -778,11 +782,16 @@ class TextEditor(QMainWindow):
                     self.open_empty_tab()
             elif selected_option == "Open File":
                 dialog = QFileDialog(self)
-                dialog.setFileMode(QFileDialog.ExistingFile)
+                dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
 
-                options = QFileDialog.Options()
-                options |= QFileDialog.DontUseNativeDialog
-                fileName, _ = dialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
+                options = QFileDialog.Option.DontUseNativeDialog
+                fileName, _ = dialog.getOpenFileName(
+                    self, 
+                    "Open File", 
+                    "", 
+                    "All Files (*);;Text Files (*.txt);;Python Files (*.py)", 
+                    options=options
+                )
 
                 if fileName:
                     if fileName.endswith(".txt"):
@@ -841,26 +850,39 @@ class TextEditor(QMainWindow):
         text_area = self.tab_widget.widget(index)
 
         if self.is_unsaved_changes(text_area):
-            reply = QMessageBox.question(self, "Unsaved Changes",
-                                         "There are unsaved changes. Do you want to save before closing the tab?",
-                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            if reply == QMessageBox.Save:
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "There are unsaved changes. Do you want to save before closing the tab?",
+                QMessageBox.StandardButton.Save |
+                QMessageBox.StandardButton.Discard |
+                QMessageBox.StandardButton.Cancel
+            )
+
+            if reply == QMessageBox.StandardButton.Save:
                 self.save_file()
-            elif reply == QMessageBox.Cancel:
+            elif reply == QMessageBox.StandardButton.Cancel:
                 return
 
         self.tab_widget.removeTab(index)
     def closeEvent(self, event):
         current_widget = self.tab_widget.currentWidget()
         if self.is_unsaved_changes(current_widget):
-            reply = QMessageBox.question(self, "Unsaved Changes",
-                                         "There are unsaved changes. Do you want to save before exiting?",
-                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            if reply == QMessageBox.Save:
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "There are unsaved changes. Do you want to save before exiting?",
+                QMessageBox.StandardButton.Save | 
+                QMessageBox.StandardButton.Discard | 
+                QMessageBox.StandardButton.Cancel
+            )
+            
+            if reply == QMessageBox.StandardButton.Save:
                 self.save_file()
-            elif reply == QMessageBox.Cancel:
+            elif reply == QMessageBox.StandardButton.Cancel:
                 event.ignore()
                 return
+        
         event.accept()
 
         # Check if it's the last tab being closed
@@ -886,41 +908,50 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(current_index, "Untitled")
     def print_document(self):
         printer = QPrinter(QPrinter.HighResolution)
-        printer.setPageSize(QPrinter.A4)
+        printer.setPageSize(QPrinter.PageSize.A4)
 
         dialog = QPrintDialog(printer, self)
-        if dialog.exec_() == QPrintDialog.Accepted:
+        if dialog.exec() == QPrintDialog.Accepted:
             current_widget = self.tab_widget.currentWidget()
-            current_widget.print_(printer)
-    def search_word(self, word):
-        current_widget = self.tab_widget.currentWidget()
-        text_edit = current_widget
+            current_widget.print(printer)
+    def search_word(self, word: str):
+        current_widget: QWidget = self.tab_widget.currentWidget()
+        text_edit: QTextEdit = current_widget
+        
         cursor = QTextCursor(text_edit.document())
-
+        
         if cursor.hasSelection():
             cursor.clearSelection()
-
+        
         found = False
         while True:
             cursor = text_edit.document().find(word, cursor)
-
+            
             if cursor.isNull():
                 break
-
+            
             found = True
-
-            cursor.select(QTextCursor.WordUnderCursor)
+            
+            cursor.select(QTextCursor.SelectionType.WordUnderCursor)
             text_edit.setTextCursor(cursor)
             text_edit.ensureCursorVisible()
-
-            reply = QMessageBox.question(self, "Word Found",
-                                         f"The word '{word}' was found in the document. Do you want to continue searching?",
-                                         QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.No:
+            
+            reply = QMessageBox.question(
+                self,
+                "Word Found",
+                f"The word '{word}' was found in the document. Do you want to continue searching?",
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.No:
                 break
-
+        
         if not found:
-            QMessageBox.information(self, "Word Not Found", f"The word '{word}' was not found in the document.")
+            QMessageBox.information(
+                self,
+                "Word Not Found",
+                f"The word '{word}' was not found in the document."
+            )
 
     def show_search_dialog(self):
         word, ok = QInputDialog.getText(self, "Search Word", "Enter the word to search:")
@@ -982,4 +1013,4 @@ if __name__ == "__main__":
     window = TextEditor()
     window.show()
 
-    sys.exit(app_pyqt.exec_())
+    sys.exit(app_pyqt.exec())
