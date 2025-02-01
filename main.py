@@ -623,14 +623,14 @@ class TextEditor(QMainWindow):
         # cursor = QTextCursor(self.text_area.document())
         cursor = QTextCursor(text_widget.document())
         cursor.setPosition(0)
-        cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
+        cursor.movePosition(QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor)
         selected_text = cursor.selection().toPlainText()
 
         runs = []
         start = 0
         for char in selected_text:
             cursor.setPosition(start)
-            cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
+            cursor.movePosition(QTextCursor.MoveOperation.NextCharacter, QTextCursor.MoveMode.KeepAnchor)
             char_format = cursor.charFormat()
             runs.append((char, {
                 "bold": char_format.font().bold(),
