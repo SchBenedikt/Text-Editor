@@ -513,10 +513,6 @@ class TextEditor(QMainWindow):
                 return repository_name
         return None
 
-
-    def get_filename_from_path(self, file_path):
-        return os.path.basename(file_path)
-
     def read_upload_data(self):
         with open('upload_data.txt', 'r') as file:
             lines = file.readlines()
