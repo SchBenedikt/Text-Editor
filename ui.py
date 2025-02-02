@@ -244,7 +244,7 @@ class TextEditor(QMainWindow):
             latest_version = "vYYYY.MM.DD"  # Replace with a default version
 
         # Compare the latest version with the current version
-        current_version = "v2024.01.04"  # Replace with your actual version
+        current_version = "v2025.02.02"  # Replace with your actual version
 
         # Create a new QDialog for displaying version information
         info_dialog = QDialog(self)
