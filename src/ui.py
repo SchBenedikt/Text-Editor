@@ -23,7 +23,7 @@ from base64 import b64decode
 
 
 def get_username_from_about_file():
-    with open("about.txt", "r") as file:
+    with open("user-data/about.txt", "r") as file:
         lines = file.readlines()
         for line in lines:
             if line.startswith("Username:"):
@@ -314,7 +314,7 @@ class TextEditor(QMainWindow):
 
     def load_projects(self):
         projects = []
-        with open("projects.txt", "r") as file:
+        with open("user-data/projects.txt", "r") as file:
             for line in file:
                 project = line.strip()
                 if project:
@@ -418,7 +418,7 @@ class TextEditor(QMainWindow):
             if choice == 'Save locally':
                 self.save_locally(content)
             elif choice == 'Save on GitHub':
-                if os.path.exists('upload_data.txt'):
+                if os.path.exists('user-data/upload_data.txt'):
                     github_username, access_token = self.read_upload_data()
                     repo_name = self.get_user_repository(github_username, access_token)
                     if repo_name:
@@ -449,7 +449,7 @@ class TextEditor(QMainWindow):
                 repository_name, ok3 = QInputDialog.getItem(self, 'Select Repository', 'Choose a GitHub repository:', repositories, 0, False)
 
                 if ok3:
-                    with open('upload_data.txt', 'w') as file:
+                    with open('user-data/upload_data.txt', 'w') as file:
                         file.write(f"{github_username}\n{access_token}\n{repository_name}")
 
                     self.save_to_github(content, github_username, access_token, repository_name)
@@ -514,7 +514,7 @@ class TextEditor(QMainWindow):
         return None
 
     def read_upload_data(self):
-        with open('upload_data.txt', 'r') as file:
+        with open('user-data/upload_data.txt', 'r') as file:
             lines = file.readlines()
             github_username = lines[0].strip()
             access_token = lines[1].strip()
@@ -557,7 +557,7 @@ class TextEditor(QMainWindow):
     def load_github_credentials(self):
         # Read GitHub credentials from upload_data.txt
         try:
-            with open('upload_data.txt', 'r') as file:
+            with open('user-data/upload_data.txt', 'r') as file:
                 lines = file.readlines()
                 github_username = lines[0].strip()
                 access_token = lines[1].strip()

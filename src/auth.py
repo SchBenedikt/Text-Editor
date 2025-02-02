@@ -146,7 +146,7 @@ def get_projects():
 
 
 def save_projects(projects):
-    with open("projects.txt", "w") as file:
+    with open("user-data/projects.txt", "w") as file:
         file.write("\n".join(projects))
 
 
@@ -163,19 +163,19 @@ def save_user_info(username):
 
         if response.status_code == 200:
             user_info = response.json()
-            with open("about.txt", "w") as file:
+            with open("user-data/about.txt", "w") as file:
                 file.write(f"Username: {username}\n")
                 file.write(f"Name: {user_info['name']}\n")
                 file.write(f"Email: {user_info['email']}\n")
                 # Write other contact information as desired
 
 # Überprüfen und Erstellen der Datei, falls nicht vorhanden
-if not os.path.exists("projects.txt"):
-    with open("projects.txt", "w"):
+if not os.path.exists("user-data/projects.txt"):
+    with open("user-data/projects.txt", "w"):
         pass
 
-if not os.path.exists("about.txt"):
-    with open("about.txt", "w"):
+if not os.path.exists("user-data/about.txt"):
+    with open("user-data/about.txt", "w"):
         pass
 
 if __name__ == "__main__":
