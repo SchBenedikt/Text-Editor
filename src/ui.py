@@ -1,25 +1,21 @@
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtWebEngineWidgets import *
-from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
-from docx import Document
-from docx.shared import Pt, RGBColor
+import codecs
 import os
 import re
+import threading
 import webbrowser
-import sys
-import threading
-import requests
-from flask import Flask, request, session
-from authlib.integrations.flask_client import OAuth
-from authlib.integrations.requests_client import OAuth2Session
-from requests_oauthlib import OAuth2Session
-import threading
-from auth import app, github
-from urllib.parse import quote
-import codecs
 from base64 import b64decode
+from urllib.parse import quote
+
+import requests
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt6.QtWebEngineWidgets import *
+from PyQt6.QtWidgets import *
+from docx import Document
+from docx.shared import Pt, RGBColor
+
+from auth import app
 
 
 def get_username_from_about_file():
