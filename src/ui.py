@@ -7,11 +7,11 @@ from base64 import b64decode
 from urllib.parse import quote
 
 import requests
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from PyQt6.QtCore import Qt, QSize, QUrl, QFileInfo
+from PyQt6.QtGui import QIcon, QFont, QAction, QColor, QTextCursor, QKeySequence, QDesktopServices
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt6.QtWebEngineWidgets import *
-from PyQt6.QtWidgets import *
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QStatusBar, QMainWindow, QTabWidget, QDockWidget, QWidget, QVBoxLayout, QLabel, QApplication, QToolBar, QFontComboBox, QToolButton, QTextEdit, QFileDialog, QMessageBox, QInputDialog, QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton, QColorDialog
 from docx import Document
 from docx.shared import Pt, RGBColor
 
