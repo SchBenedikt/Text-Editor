@@ -9,9 +9,8 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 
 
-
 app = Flask(__name__)
-app.secret_key = "some_random_string" 
+app.secret_key = "some_random_string"
 
 oauth = OAuth(app)
 github = oauth.register(
@@ -26,15 +25,18 @@ github = oauth.register(
     client_kwargs={"scope": "user:email"},
 )
 
+
 @app.route("/")
 def index():
     username = session.get("username")
     if username:
         projects = get_projects()
-        
+
         save_projects(projects)
 
-        return f"Hello {username}! You're now logged in. Projects: {', '.join(projects)}"
+        return (
+            f"Hello {username}! You're now logged in. Projects: {', '.join(projects)}"
+        )
     else:
         return redirect(url_for("login"))
 
@@ -65,7 +67,6 @@ def callback():
     save_user_info(username)
 
     return redirect(url_for("index"))
-
 
 
 def get_access_token(code):
@@ -147,6 +148,7 @@ def save_user_info(username):
                 file.write(f"Name: {user_info['name']}\n")
                 file.write(f"Email: {user_info['email']}\n")
 
+
 if not os.path.exists("user-data/projects.txt"):
     with open("user-data/projects.txt", "w"):
         pass
@@ -156,7 +158,9 @@ if not os.path.exists("user-data/about.txt"):
         pass
 
 if __name__ == "__main__":
-    app_thread = threading.Thread(target=app.run, kwargs={"host": "localhost", "port": 5000})
+    app_thread = threading.Thread(
+        target=app.run, kwargs={"host": "localhost", "port": 5000}
+    )
     app_thread.daemon = True
     app_thread.start()
     window = TextEditor()

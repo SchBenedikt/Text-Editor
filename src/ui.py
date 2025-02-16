@@ -8,10 +8,40 @@ from urllib.parse import quote
 
 import requests
 from PyQt6.QtCore import Qt, QSize, QUrl, QFileInfo
-from PyQt6.QtGui import QIcon, QFont, QAction, QColor, QTextCursor, QKeySequence, QDesktopServices
+from PyQt6.QtGui import (
+    QIcon,
+    QFont,
+    QAction,
+    QColor,
+    QTextCursor,
+    QKeySequence,
+    QDesktopServices,
+)
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWidgets import QStatusBar, QMainWindow, QTabWidget, QDockWidget, QWidget, QVBoxLayout, QLabel, QApplication, QToolBar, QFontComboBox, QToolButton, QTextEdit, QFileDialog, QMessageBox, QInputDialog, QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton, QColorDialog
+from PyQt6.QtWidgets import (
+    QStatusBar,
+    QMainWindow,
+    QTabWidget,
+    QDockWidget,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QApplication,
+    QToolBar,
+    QFontComboBox,
+    QToolButton,
+    QTextEdit,
+    QFileDialog,
+    QMessageBox,
+    QInputDialog,
+    QDialog,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QPushButton,
+    QColorDialog,
+)
 from docx import Document
 from docx.shared import Pt, RGBColor
 
@@ -54,16 +84,15 @@ class TextEditor(QMainWindow):
         self.line_number_label = QLabel()
         self.statusBar().addPermanentWidget(self.line_number_label)
 
-
     def init_menu(self):
         menubar = self.menuBar()
         # Infos-Menü
-        info_menu = menubar.addMenu('Infos')
-        developer_action = QAction('Developer', self)
+        info_menu = menubar.addMenu("Infos")
+        developer_action = QAction("Developer", self)
         developer_action.triggered.connect(self.show_developer_action)
         info_menu.addAction(developer_action)
 
-        about_action = QAction('About', self)
+        about_action = QAction("About", self)
         about_action.triggered.connect(self.show_info_dock)
         info_menu.addAction(about_action)
 
@@ -86,14 +115,13 @@ class TextEditor(QMainWindow):
         # Das QDockWidget initial verstecken
         self.info_dock.hide()
 
-
         file_menu = menubar.addMenu("File")
         open_action = QAction("Open", self)
         open_action.triggered.connect(self.open_file)
         file_menu.addAction(open_action)
 
         new_tab_action = QAction("New Tab", self)
-        new_tab_action.setShortcut(QKeySequence("Ctrl+T")) 
+        new_tab_action.setShortcut(QKeySequence("Ctrl+T"))
         new_tab_action.triggered.connect(self.open_new_tab)
         file_menu.addAction(new_tab_action)
 
@@ -148,27 +176,32 @@ class TextEditor(QMainWindow):
             projects_menu.addSeparator()
 
         self.set_style_options()
-            
+
         # Add projects to the menu
         for project in projects:
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
+
     def update_status_bar(self):
         current_widget = self.tab_widget.currentWidget()
         if isinstance(current_widget, QTextEdit):
             content = current_widget.toPlainText()
 
             # Word und Zeichen zählen (Apostrophe als Teil eines Worts berücksichtigen)
-            word_count = len(re.findall(r'\b\w+\'?\w*\b', content))
+            word_count = len(re.findall(r"\b\w+\'?\w*\b", content))
             char_count = len(content)
 
             # Zeilennummer abrufen
             cursor = current_widget.textCursor()
-            line_number = cursor.blockNumber() + 1  # BlockNumber() gibt 0-basierte Nummer zurück, daher +1
+            line_number = (
+                cursor.blockNumber() + 1
+            )  # BlockNumber() gibt 0-basierte Nummer zurück, daher +1
 
             # Statusleisteninformationen aktualisieren
-            self.stats_label.setText(f"Word count: {word_count} | Character count: {char_count}")
+            self.stats_label.setText(
+                f"Word count: {word_count} | Character count: {char_count}"
+            )
 
             # Zeilennummer ganz rechts in der Statusleiste anzeigen
             self.line_number_label.setText(f"Line: {line_number}")
@@ -219,23 +252,30 @@ class TextEditor(QMainWindow):
 
             # Das Dialogfenster in der Mitte des Hauptfensters positionieren
             rect = self.geometry()
-            developer_info_dialog.move(rect.center() - developer_info_dialog.rect().center())
+            developer_info_dialog.move(
+                rect.center() - developer_info_dialog.rect().center()
+            )
 
             # Die Modalität des Fensters auf Anwendungsmodalität setzen
             developer_info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
 
             # Das QDialog anzeigen
             developer_info_dialog.exec()
+
     def show_info_dock(self):
         # Replace with your actual repository and author
         repo_owner = "SchBenedikt"
         repo_name = "Text-Editor"
 
         # Fetch the latest release information from GitHub
-        release_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+        release_url = (
+            f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+        )
         response = requests.get(release_url)
         if response.status_code == 200:
-            latest_version = response.json().get("tag_name", "vYYYY.MM.DD")  # Replace with a default version
+            latest_version = response.json().get(
+                "tag_name", "vYYYY.MM.DD"
+            )  # Replace with a default version
         else:
             latest_version = "vYYYY.MM.DD"  # Replace with a default version
 
@@ -248,9 +288,14 @@ class TextEditor(QMainWindow):
 
         # Create QLabel widgets for displaying version information
         if latest_version != current_version:
-            label_version = QLabel(f"Current Version: {current_version}\n\nNew Version: {latest_version}", info_dialog)
+            label_version = QLabel(
+                f"Current Version: {current_version}\n\nNew Version: {latest_version}",
+                info_dialog,
+            )
             button_open_release = QPushButton("New release available", info_dialog)
-            button_open_release.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(release_url)))
+            button_open_release.clicked.connect(
+                lambda: QDesktopServices.openUrl(QUrl(release_url))
+            )
         else:
             label_version = QLabel(f"{current_version}", info_dialog)
             button_open_release = None
@@ -274,6 +319,7 @@ class TextEditor(QMainWindow):
 
         # Show the QDialog
         info_dialog.exec()
+
     def open_project(self, project):
         username = get_username_from_about_file()
         if username:
@@ -286,8 +332,9 @@ class TextEditor(QMainWindow):
 
                 # Display the file names in a QMessageBox
                 if files:
-                    selected_file, ok = QInputDialog.getItem(self, "Select File", "Select a file to open:", files, 0,
-                                                             False)
+                    selected_file, ok = QInputDialog.getItem(
+                        self, "Select File", "Select a file to open:", files, 0, False
+                    )
                     if ok and selected_file:
                         # Fetch the content of the selected file
                         file_content_url = f"https://api.github.com/repos/{username}/{project}/contents/{quote(selected_file)}"
@@ -295,15 +342,21 @@ class TextEditor(QMainWindow):
                         content_response.raise_for_status()
 
                         # Decode the base64-encoded content
-                        content = b64decode(content_response.json()["content"]).decode("utf-8")
+                        content = b64decode(content_response.json()["content"]).decode(
+                            "utf-8"
+                        )
 
                         current_widget = self.tab_widget.currentWidget()
                         current_widget.setPlainText(content)
                         self.set_tab_title(current_widget, selected_file)
                 else:
-                    QMessageBox.warning(self, "No Files", f"There are no files in {project}.")
+                    QMessageBox.warning(
+                        self, "No Files", f"There are no files in {project}."
+                    )
             except requests.RequestException as e:
-                QMessageBox.warning(self, "Error", f"Error fetching project files: {str(e)}")
+                QMessageBox.warning(
+                    self, "Error", f"Error fetching project files: {str(e)}"
+                )
         else:
             # Handle the case when username is not available
             pass
@@ -327,6 +380,7 @@ class TextEditor(QMainWindow):
         # Open web browser to localhost:5000
         url = "http://127.0.0.1:5000"
         webbrowser.open(url)
+
     def undo(self):
         current_widget = self.tab_widget.currentWidget()
         current_widget.undo()
@@ -353,11 +407,15 @@ class TextEditor(QMainWindow):
         underline_action.triggered.connect(self.underline_text)
         toolbar.addAction(underline_action)
 
-        increase_font_action = QAction(QIcon("images/increase_font.png"), "Increase Font Size", self)
+        increase_font_action = QAction(
+            QIcon("images/increase_font.png"), "Increase Font Size", self
+        )
         increase_font_action.triggered.connect(self.increase_font_size)
         toolbar.addAction(increase_font_action)
 
-        decrease_font_action = QAction(QIcon("images/decrease_font.png"), "Decrease Font Size", self)
+        decrease_font_action = QAction(
+            QIcon("images/decrease_font.png"), "Decrease Font Size", self
+        )
         decrease_font_action.triggered.connect(self.decrease_font_size)
         toolbar.addAction(decrease_font_action)
 
@@ -366,15 +424,18 @@ class TextEditor(QMainWindow):
         font_combobox.currentFontChanged.connect(self.change_font)
         toolbar.addWidget(font_combobox)
 
-        change_color_action = QAction(QIcon("images/change_color.png"), "Change Text Color", self)
+        change_color_action = QAction(
+            QIcon("images/change_color.png"), "Change Text Color", self
+        )
         change_color_action.triggered.connect(self.change_text_color)
         toolbar.addAction(change_color_action)
 
-        set_text_background_color = QAction(QIcon("images/change_bg_color.png"), "Change Background Color", self)
+        set_text_background_color = QAction(
+            QIcon("images/change_bg_color.png"), "Change Background Color", self
+        )
         set_text_background_color.triggered.connect(self.set_text_background_color)
         toolbar.addAction(set_text_background_color)
 
-       
     def init_tab_bar(self):
         add_tab_button = QToolButton(self)
         add_tab_button.setText("+")
@@ -401,76 +462,117 @@ class TextEditor(QMainWindow):
             else:
                 QMessageBox.warning(self, "Open File", "Unable to open the file.")
 
-
     def save_file(self):
         # Show a dialog to choose the save option
-        options = ['Save locally', 'Save on GitHub']
-        choice, ok = QInputDialog.getItem(self, 'Save Option', 'Choose a save option:', options, 0, False)
+        options = ["Save locally", "Save on GitHub"]
+        choice, ok = QInputDialog.getItem(
+            self, "Save Option", "Choose a save option:", options, 0, False
+        )
 
         if ok:
             current_widget = self.tab_widget.currentWidget()
             content = current_widget.toPlainText()
 
-            if choice == 'Save locally':
+            if choice == "Save locally":
                 self.save_locally(content)
-            elif choice == 'Save on GitHub':
-                if os.path.exists('user-data/upload_data.txt'):
+            elif choice == "Save on GitHub":
+                if os.path.exists("user-data/upload_data.txt"):
                     github_username, access_token = self.read_upload_data()
                     repo_name = self.get_user_repository(github_username, access_token)
                     if repo_name:
-                        self.save_to_github(content, github_username, access_token, repo_name)
+                        self.save_to_github(
+                            content, github_username, access_token, repo_name
+                        )
                     else:
-                        QMessageBox.warning(self, 'GitHub Save', 'No repositories found for the given GitHub username.')
+                        QMessageBox.warning(
+                            self,
+                            "GitHub Save",
+                            "No repositories found for the given GitHub username.",
+                        )
                 else:
                     self.ask_github_credentials_and_save(content)
 
-
     def save_locally(self, content):
         file_dialog = QFileDialog()
-        file_name, _ = file_dialog.getSaveFileName(self, "Save File Locally", "", "All Files (*)")
+        file_name, _ = file_dialog.getSaveFileName(
+            self, "Save File Locally", "", "All Files (*)"
+        )
 
         if file_name:
             with open(file_name, "w") as f:
                 f.write(content)
-            QMessageBox.information(self, "Save Successful", "File saved locally successfully.")
+            QMessageBox.information(
+                self, "Save Successful", "File saved locally successfully."
+            )
 
     def ask_github_credentials_and_save(self, content):
-        github_username, ok1 = QInputDialog.getText(self, 'GitHub Credentials', 'Enter your GitHub username:')
-        access_token, ok2 = QInputDialog.getText(self, 'GitHub Credentials', 'Enter your GitHub personal access token:')
+        github_username, ok1 = QInputDialog.getText(
+            self, "GitHub Credentials", "Enter your GitHub username:"
+        )
+        access_token, ok2 = QInputDialog.getText(
+            self, "GitHub Credentials", "Enter your GitHub personal access token:"
+        )
 
         if ok1 and ok2:
             repositories = self.get_user_repositories(github_username, access_token)
 
             if repositories:
-                repository_name, ok3 = QInputDialog.getItem(self, 'Select Repository', 'Choose a GitHub repository:', repositories, 0, False)
+                repository_name, ok3 = QInputDialog.getItem(
+                    self,
+                    "Select Repository",
+                    "Choose a GitHub repository:",
+                    repositories,
+                    0,
+                    False,
+                )
 
                 if ok3:
-                    with open('user-data/upload_data.txt', 'w') as file:
-                        file.write(f"{github_username}\n{access_token}\n{repository_name}")
+                    with open("user-data/upload_data.txt", "w") as file:
+                        file.write(
+                            f"{github_username}\n{access_token}\n{repository_name}"
+                        )
 
-                    self.save_to_github(content, github_username, access_token, repository_name)
+                    self.save_to_github(
+                        content, github_username, access_token, repository_name
+                    )
                 else:
-                    QMessageBox.warning(self, 'GitHub Save', 'No GitHub repository selected. Unable to save on GitHub.')
+                    QMessageBox.warning(
+                        self,
+                        "GitHub Save",
+                        "No GitHub repository selected. Unable to save on GitHub.",
+                    )
             else:
-                QMessageBox.warning(self, 'GitHub Save', 'No repositories found for the given GitHub username.')
+                QMessageBox.warning(
+                    self,
+                    "GitHub Save",
+                    "No repositories found for the given GitHub username.",
+                )
         else:
-            QMessageBox.warning(self, 'GitHub Save', 'GitHub credentials not provided. Unable to save on GitHub.')
+            QMessageBox.warning(
+                self,
+                "GitHub Save",
+                "GitHub credentials not provided. Unable to save on GitHub.",
+            )
+
     def get_user_repositories(self, github_username, access_token):
         api_url = f"https://api.github.com/users/{github_username}/repos"
         headers = {"Authorization": f"token {access_token}"}
 
         try:
             response = requests.get(api_url, headers=headers)
-            repositories = [repo['name'] for repo in response.json()]
+            repositories = [repo["name"] for repo in response.json()]
             return repositories
         except requests.RequestException as e:
             print(f"Error getting GitHub repositories: {e}")
             return None
 
-
     def save_to_github(self, content, github_username, access_token, repo_name):
         # Show a dialog to input the desired file name for GitHub
-        custom_github_filename, ok = QInputDialog.getText(self, 'GitHub File Name', 'Enter the desired file name for GitHub (with extension):')
+        custom_github_filename, ok = QInputDialog.getText(
+            self,
+            "GitHub File Name",
+            "Enter the desired file name for GitHub (with extension):",
+        )
 
         if ok and custom_github_filename:
             api_url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{custom_github_filename}"
@@ -478,16 +580,24 @@ class TextEditor(QMainWindow):
 
             data = {
                 "message": "Upload file via schBenedikt's Text Editor",
-                "content": codecs.encode(content.encode("utf-8"), "base64").decode("utf-8"),
-                "sha": self.get_sha_from_github(custom_github_filename, github_username, access_token, repo_name)
+                "content": codecs.encode(content.encode("utf-8"), "base64").decode(
+                    "utf-8"
+                ),
+                "sha": self.get_sha_from_github(
+                    custom_github_filename, github_username, access_token, repo_name
+                ),
             }
 
             response = requests.put(api_url, headers=headers, json=data)
 
             if response.status_code == 200:
-                print(f"File '{custom_github_filename}' uploaded to GitHub successfully.")
+                print(
+                    f"File '{custom_github_filename}' uploaded to GitHub successfully."
+                )
             else:
-                print(f"Unable to upload file to GitHub. Status code: {response.status_code}, Message: {response.text}")
+                print(
+                    f"Unable to upload file to GitHub. Status code: {response.status_code}, Message: {response.text}"
+                )
 
     def get_user_repositories(self, github_username, access_token):
         api_url = f"https://api.github.com/users/{github_username}/repos"
@@ -495,7 +605,7 @@ class TextEditor(QMainWindow):
 
         try:
             response = requests.get(api_url, headers=headers)
-            repositories = [repo['name'] for repo in response.json()]
+            repositories = [repo["name"] for repo in response.json()]
             return repositories
         except requests.RequestException as e:
             print(f"Error getting GitHub repositories: {e}")
@@ -504,20 +614,28 @@ class TextEditor(QMainWindow):
     def get_user_repository(self, github_username, access_token):
         repositories = self.get_user_repositories(github_username, access_token)
         if repositories:
-            repository_name, ok = QInputDialog.getItem(self, 'Select Repository', 'Choose a GitHub repository:', repositories, 0, False)
+            repository_name, ok = QInputDialog.getItem(
+                self,
+                "Select Repository",
+                "Choose a GitHub repository:",
+                repositories,
+                0,
+                False,
+            )
             if ok:
                 return repository_name
         return None
 
     def read_upload_data(self):
-        with open('user-data/upload_data.txt', 'r') as file:
+        with open("user-data/upload_data.txt", "r") as file:
             lines = file.readlines()
             github_username = lines[0].strip()
             access_token = lines[1].strip()
             return github_username, access_token
 
-
-    def upload_to_github(self, content, github_filename, github_username, access_token, repo_name):
+    def upload_to_github(
+        self, content, github_filename, github_username, access_token, repo_name
+    ):
         # Extrahiere nur den Dateinamen aus dem vollständigen Pfad
         github_filename = os.path.basename(github_filename)
 
@@ -527,7 +645,9 @@ class TextEditor(QMainWindow):
         data = {
             "message": "Update file via script",
             "content": codecs.encode(content.encode("utf-8"), "base64").decode("utf-8"),
-            "sha": self.get_sha_from_github(github_filename, github_username, access_token, repo_name)
+            "sha": self.get_sha_from_github(
+                github_filename, github_username, access_token, repo_name
+            ),
         }
 
         response = requests.put(api_url, headers=headers, json=data)
@@ -535,9 +655,13 @@ class TextEditor(QMainWindow):
         if response.status_code == 200:
             print(f"File '{github_filename}' uploaded to GitHub successfully.")
         else:
-            print(f"Unable to upload file to GitHub. Status code: {response.status_code}, Message: {response.text}")
+            print(
+                f"Unable to upload file to GitHub. Status code: {response.status_code}, Message: {response.text}"
+            )
 
-    def get_sha_from_github(self, github_filename, github_username, access_token, repo_name):
+    def get_sha_from_github(
+        self, github_filename, github_username, access_token, repo_name
+    ):
         api_url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{github_filename}"
         headers = {"Authorization": f"token {access_token}"}
 
@@ -547,13 +671,15 @@ class TextEditor(QMainWindow):
             sha = response.json().get("sha")
             return sha
         else:
-            print(f"Unable to get SHA from GitHub. Status code: {response.status_code}, Message: {response.text}")
+            print(
+                f"Unable to get SHA from GitHub. Status code: {response.status_code}, Message: {response.text}"
+            )
             return None
 
     def load_github_credentials(self):
         # Read GitHub credentials from upload_data.txt
         try:
-            with open('user-data/upload_data.txt', 'r') as file:
+            with open("user-data/upload_data.txt", "r") as file:
                 lines = file.readlines()
                 github_username = lines[0].strip()
                 access_token = lines[1].strip()
@@ -583,7 +709,9 @@ class TextEditor(QMainWindow):
                 run = paragraph.add_run(run_text)
                 self.apply_formatting(run, font_format)
             doc.save(file)
-            QMessageBox.information(self, "Export as DOCX", "File exported successfully.")
+            QMessageBox.information(
+                self, "Export as DOCX", "File exported successfully."
+            )
 
     def export_as_txt(self):
         file, _ = QFileDialog.getSaveFileName(self, "Export as TXT", filter="*.txt")
@@ -593,7 +721,9 @@ class TextEditor(QMainWindow):
             try:
                 with open(file, "w") as f:
                     f.write(content)
-                QMessageBox.information(self, "Export as TXT", "File exported successfully.")
+                QMessageBox.information(
+                    self, "Export as TXT", "File exported successfully."
+                )
             except:
                 QMessageBox.warning(self, "Export as TXT", "Unable to export the file.")
 
@@ -608,37 +738,50 @@ class TextEditor(QMainWindow):
         if font_format["color"]:
             rgb_color = QColor(font_format["color"])
             # font.color.rgb = rgb_color.rgb()
-            font.color.rgb = RGBColor(rgb_color.red(), rgb_color.green(), rgb_color.blue())
+            font.color.rgb = RGBColor(
+                rgb_color.red(), rgb_color.green(), rgb_color.blue()
+            )
         font.size = Pt(15)
 
     def get_runs_with_formatting(self, text_widget):
         # cursor = QTextCursor(self.text_area.document())
         cursor = QTextCursor(text_widget.document())
         cursor.setPosition(0)
-        cursor.movePosition(QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor)
+        cursor.movePosition(
+            QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor
+        )
         selected_text = cursor.selection().toPlainText()
 
         runs = []
         start = 0
         for char in selected_text:
             cursor.setPosition(start)
-            cursor.movePosition(QTextCursor.MoveOperation.NextCharacter, QTextCursor.MoveMode.KeepAnchor)
+            cursor.movePosition(
+                QTextCursor.MoveOperation.NextCharacter, QTextCursor.MoveMode.KeepAnchor
+            )
             char_format = cursor.charFormat()
-            runs.append((char, {
-                "bold": char_format.font().bold(),
-                "italic": char_format.font().italic(),
-                "underline": char_format.font().underline(),
-                "color": char_format.foreground().color().name()
-            }))
+            runs.append(
+                (
+                    char,
+                    {
+                        "bold": char_format.font().bold(),
+                        "italic": char_format.font().italic(),
+                        "underline": char_format.font().underline(),
+                        "color": char_format.foreground().color().name(),
+                    },
+                )
+            )
             start += 1
         return runs
 
-
     def is_unsaved_changes(self, text_widget):
-        if isinstance(text_widget, QTextEdit):  # Check if text_widget is a QTextEdit instance
+        if isinstance(
+            text_widget, QTextEdit
+        ):  # Check if text_widget is a QTextEdit instance
             content = text_widget.toPlainText()
             return content != "" and content != self.get_file_content(text_widget)
         return False
+
     def get_file_content(self, text_widget):
         file_path = getattr(text_widget, "file_path", None)
         if file_path:
@@ -735,7 +878,6 @@ class TextEditor(QMainWindow):
         elif not color.isValid():
             print("Invalid color")
 
-
     def set_text_background_color(self, color):
         color = QColorDialog.getColor(parent=self)
         if color.isValid():
@@ -748,7 +890,14 @@ class TextEditor(QMainWindow):
 
     def open_new_tab(self):
         options = ["New File", "Open File", "Chat"]
-        selected_option, ok = QInputDialog.getItem(self, "New File, Open File, or Chat?", "Choose an option:", options, 0, False)
+        selected_option, ok = QInputDialog.getItem(
+            self,
+            "New File, Open File, or Chat?",
+            "Choose an option:",
+            options,
+            0,
+            False,
+        )
 
         if ok:
             if selected_option == "New File":
@@ -758,9 +907,10 @@ class TextEditor(QMainWindow):
                 options = QFileDialog.Option.DontUseNativeDialog
                 fileName, _ = dialog.getSaveFileName(
                     self,
-                    "New File", 
-                    "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", 
-                    options=options
+                    "New File",
+                    "",
+                    "All Files (*);;Text Files (*.txt);;Python Files (*.py)",
+                    options=options,
                 )
 
                 if fileName:
@@ -778,11 +928,11 @@ class TextEditor(QMainWindow):
 
                 options = QFileDialog.Option.DontUseNativeDialog
                 fileName, _ = dialog.getOpenFileName(
-                    self, 
-                    "Open File", 
-                    "", 
-                    "All Files (*);;Text Files (*.txt);;Python Files (*.py)", 
-                    options=options
+                    self,
+                    "Open File",
+                    "",
+                    "All Files (*);;Text Files (*.txt);;Python Files (*.py)",
+                    options=options,
                 )
 
                 if fileName:
@@ -804,7 +954,6 @@ class TextEditor(QMainWindow):
 
         self.tab_widget.addTab(chat_widget, "Chat")
 
-
     def open_text_file_in_tab(self, file_path):
         with open(file_path, "r") as file:
             content = file.read()
@@ -823,6 +972,7 @@ class TextEditor(QMainWindow):
     def open_generic_file_in_tab(self, file_path):
         # Implementiere entsprechende Logik, um generische Dateien zu öffnen
         pass
+
     def open_empty_tab(self):
         text_area = QTextEdit()
         text_area.setFont(QFont("TkDefaultFont"))
@@ -838,6 +988,7 @@ class TextEditor(QMainWindow):
         text_area.textChanged.connect(self.update_status_bar)
         self.tab_widget.addTab(text_area, "Untitled")
         self.tab_widget.setCurrentWidget(text_area)
+
     def close_tab(self, index):
         text_area = self.tab_widget.widget(index)
 
@@ -846,9 +997,9 @@ class TextEditor(QMainWindow):
                 self,
                 "Unsaved Changes",
                 "There are unsaved changes. Do you want to save before closing the tab?",
-                QMessageBox.StandardButton.Save |
-                QMessageBox.StandardButton.Discard |
-                QMessageBox.StandardButton.Cancel
+                QMessageBox.StandardButton.Save
+                | QMessageBox.StandardButton.Discard
+                | QMessageBox.StandardButton.Cancel,
             )
 
             if reply == QMessageBox.StandardButton.Save:
@@ -857,6 +1008,7 @@ class TextEditor(QMainWindow):
                 return
 
         self.tab_widget.removeTab(index)
+
     def closeEvent(self, event):
         current_widget = self.tab_widget.currentWidget()
         if self.is_unsaved_changes(current_widget):
@@ -864,23 +1016,24 @@ class TextEditor(QMainWindow):
                 self,
                 "Unsaved Changes",
                 "There are unsaved changes. Do you want to save before exiting?",
-                QMessageBox.StandardButton.Save | 
-                QMessageBox.StandardButton.Discard | 
-                QMessageBox.StandardButton.Cancel
+                QMessageBox.StandardButton.Save
+                | QMessageBox.StandardButton.Discard
+                | QMessageBox.StandardButton.Cancel,
             )
-            
+
             if reply == QMessageBox.StandardButton.Save:
                 self.save_file()
             elif reply == QMessageBox.StandardButton.Cancel:
                 event.ignore()
                 return
-        
+
         event.accept()
 
         # Check if it's the last tab being closed
         if self.tab_widget.count() == 0:
             # Close the entire application
             self.close()
+
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
         current_index = self.tab_widget.currentIndex()
@@ -898,6 +1051,7 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(current_index, file_name)
             else:
                 self.tab_widget.setTabText(current_index, "Untitled")
+
     def print_document(self):
         printer = QPrinter(QPrinter.HighResolution)
         printer.setPageSize(QPrinter.PageSize.A4)
@@ -906,47 +1060,50 @@ class TextEditor(QMainWindow):
         if dialog.exec() == QPrintDialog.Accepted:
             current_widget = self.tab_widget.currentWidget()
             current_widget.print(printer)
+
     def search_word(self, word: str):
         current_widget: QWidget = self.tab_widget.currentWidget()
         text_edit: QTextEdit = current_widget
-        
+
         cursor = QTextCursor(text_edit.document())
-        
+
         if cursor.hasSelection():
             cursor.clearSelection()
-        
+
         found = False
         while True:
             cursor = text_edit.document().find(word, cursor)
-            
+
             if cursor.isNull():
                 break
-            
+
             found = True
-            
+
             cursor.select(QTextCursor.SelectionType.WordUnderCursor)
             text_edit.setTextCursor(cursor)
             text_edit.ensureCursorVisible()
-            
+
             reply = QMessageBox.question(
                 self,
                 "Word Found",
                 f"The word '{word}' was found in the document. Do you want to continue searching?",
-                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
-            
+
             if reply == QMessageBox.StandardButton.No:
                 break
-        
+
         if not found:
             QMessageBox.information(
                 self,
                 "Word Not Found",
-                f"The word '{word}' was not found in the document."
+                f"The word '{word}' was not found in the document.",
             )
 
     def show_search_dialog(self):
-        word, ok = QInputDialog.getText(self, "Search Word", "Enter the word to search:")
+        word, ok = QInputDialog.getText(
+            self, "Search Word", "Enter the word to search:"
+        )
         if ok:
             self.search_word(word)
 

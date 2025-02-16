@@ -5,7 +5,9 @@ import threading
 from PyQt6.QtWidgets import QApplication
 
 if __name__ == "__main__":
-    app_thread = threading.Thread(target=app.run, kwargs={"host": "localhost", "port": 5000})
+    app_thread = threading.Thread(
+        target=app.run, kwargs={"host": "localhost", "port": 5000}
+    )
     app_thread.daemon = True
     app_thread.start()
 
