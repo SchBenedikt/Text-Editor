@@ -1,7 +1,6 @@
 import codecs
 import os
 import re
-import threading
 import webbrowser
 from base64 import b64decode
 from urllib.parse import quote
@@ -50,8 +49,6 @@ from PyQt6.QtWidgets import (
 from docx import Document
 from docx.shared import Pt, RGBColor
 
-from auth import app
-
 
 def get_username_from_about_file():
     with open("user-data/about.txt", "r") as file:
@@ -76,15 +73,13 @@ class TextEditor(QMainWindow):
         self.init_menu()
         self.init_toolbar()
         self.init_tab_bar()
-        self.text_area = QTextEdit()
 
         self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-
         self.stats_label = QLabel("Word count: 0 | Character count: 0", self)
         self.status_bar.addWidget(self.stats_label)
         self.line_number_label = QLabel()
         self.status_bar.addPermanentWidget(self.line_number_label)
+        self.setStatusBar(self.status_bar)
 
         self.open_empty_tab()
 
@@ -184,6 +179,60 @@ class TextEditor(QMainWindow):
             project_action = QAction(project, self)
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
+
+    def init_toolbar(self):
+        toolbar = QToolBar(self)
+        self.addToolBar(toolbar)
+
+        toolbar.setIconSize(QSize(20, 20))
+
+        bold_action = QAction(QIcon("images/bold.png"), "Bold", self)
+        bold_action.triggered.connect(self.bold_text)
+        toolbar.addAction(bold_action)
+
+        italic_action = QAction(QIcon("images/italic.png"), "Italic", self)
+        italic_action.triggered.connect(self.italic_text)
+        toolbar.addAction(italic_action)
+
+        underline_action = QAction(QIcon("images/underline.png"), "Underline", self)
+        underline_action.triggered.connect(self.underline_text)
+        toolbar.addAction(underline_action)
+
+        increase_font_action = QAction(
+            QIcon("images/increase_font.png"), "Increase Font Size", self
+        )
+        increase_font_action.triggered.connect(self.increase_font_size)
+        toolbar.addAction(increase_font_action)
+
+        decrease_font_action = QAction(
+            QIcon("images/decrease_font.png"), "Decrease Font Size", self
+        )
+        decrease_font_action.triggered.connect(self.decrease_font_size)
+        toolbar.addAction(decrease_font_action)
+
+        font_combobox = QFontComboBox(self)
+        font_combobox.setCurrentFont(QFont("TkDefaultFont"))
+        font_combobox.currentFontChanged.connect(self.change_font)
+        toolbar.addWidget(font_combobox)
+
+        change_color_action = QAction(
+            QIcon("images/change_color.png"), "Change Text Color", self
+        )
+        change_color_action.triggered.connect(self.change_text_color)
+        toolbar.addAction(change_color_action)
+
+        set_text_background_color = QAction(
+            QIcon("images/change_bg_color.png"), "Change Background Color", self
+        )
+        set_text_background_color.triggered.connect(self.set_text_background_color)
+        toolbar.addAction(set_text_background_color)
+
+    def init_tab_bar(self):
+        add_tab_button = QToolButton(self)
+        add_tab_button.setText("+")
+        add_tab_button.setStyleSheet("QToolButton { font-size: 20px; }")
+        add_tab_button.clicked.connect(self.open_new_tab)
+        self.tab_widget.setCornerWidget(add_tab_button)
 
     def update_status_bar(self):
         current_widget = self.tab_widget.currentWidget()
@@ -337,13 +386,7 @@ class TextEditor(QMainWindow):
         return projects
 
     def start_webserver(self):
-        def run_flask_app():
-            app.run(host="127.0.0.1", port=5000)
-
-        flask_thread = threading.Thread(target=run_flask_app)
-        flask_thread.start()
-
-        url = "http://127.0.0.1:5000"
+        url = "http://127.0.0.1:5000/login"
         webbrowser.open(url)
 
     def undo(self):
@@ -355,60 +398,6 @@ class TextEditor(QMainWindow):
         current_widget = self.tab_widget.currentWidget()
         assert isinstance(current_widget, QTextEdit)
         current_widget.redo()
-
-    def init_toolbar(self):
-        toolbar = QToolBar(self)
-        self.addToolBar(toolbar)
-
-        toolbar.setIconSize(QSize(20, 20))
-
-        bold_action = QAction(QIcon("images/bold.png"), "Bold", self)
-        bold_action.triggered.connect(self.bold_text)
-        toolbar.addAction(bold_action)
-
-        italic_action = QAction(QIcon("images/italic.png"), "Italic", self)
-        italic_action.triggered.connect(self.italic_text)
-        toolbar.addAction(italic_action)
-
-        underline_action = QAction(QIcon("images/underline.png"), "Underline", self)
-        underline_action.triggered.connect(self.underline_text)
-        toolbar.addAction(underline_action)
-
-        increase_font_action = QAction(
-            QIcon("images/increase_font.png"), "Increase Font Size", self
-        )
-        increase_font_action.triggered.connect(self.increase_font_size)
-        toolbar.addAction(increase_font_action)
-
-        decrease_font_action = QAction(
-            QIcon("images/decrease_font.png"), "Decrease Font Size", self
-        )
-        decrease_font_action.triggered.connect(self.decrease_font_size)
-        toolbar.addAction(decrease_font_action)
-
-        font_combobox = QFontComboBox(self)
-        font_combobox.setCurrentFont(QFont("TkDefaultFont"))
-        font_combobox.currentFontChanged.connect(self.change_font)
-        toolbar.addWidget(font_combobox)
-
-        change_color_action = QAction(
-            QIcon("images/change_color.png"), "Change Text Color", self
-        )
-        change_color_action.triggered.connect(self.change_text_color)
-        toolbar.addAction(change_color_action)
-
-        set_text_background_color = QAction(
-            QIcon("images/change_bg_color.png"), "Change Background Color", self
-        )
-        set_text_background_color.triggered.connect(self.set_text_background_color)
-        toolbar.addAction(set_text_background_color)
-
-    def init_tab_bar(self):
-        add_tab_button = QToolButton(self)
-        add_tab_button.setText("+")
-        add_tab_button.setStyleSheet("QToolButton { font-size: 20px; }")
-        add_tab_button.clicked.connect(self.open_new_tab)
-        self.tab_widget.setCornerWidget(add_tab_button)
 
     def open_file(self):
         file, _ = QFileDialog.getOpenFileName(self, "Open File")
@@ -812,26 +801,18 @@ class TextEditor(QMainWindow):
         current_widget.setFocus()
 
     def change_text_color(self):
-        print("Before opening color dialog")
         color = QColorDialog.getColor(parent=self)
-        print("After opening color dialog")
+        if not color.isValid():
+            print("Invalid color")
+            return
 
-        if color.isValid():
-            current_widget = self.tab_widget.currentWidget()
-            assert isinstance(current_widget, QTextEdit)
+        current_widget = self.tab_widget.currentWidget()
+        if isinstance(current_widget, QTextEdit):
             cursor = current_widget.textCursor()
             format = cursor.charFormat()
-            print(f"Cursor: {cursor}")
-            print(f"Format: {format}")
-
-            print(f"Color: {color}")
             format.setForeground(color)
-            print(f"Foreground color: {format.foreground()}")
-
             cursor.mergeCharFormat(format)
             current_widget.setFocus()
-        elif not color.isValid():
-            print("Invalid color")
 
     def set_text_background_color(self, color):
         color = QColorDialog.getColor(parent=self)
@@ -894,11 +875,7 @@ class TextEditor(QMainWindow):
     def open_chat_tab(self):
         chat_view = QWebEngineView()
         chat_view.setUrl(QUrl("https://platform.openai.com/"))
-        chat_widget = QWidget()
-        layout = QVBoxLayout(chat_widget)
-        layout.addWidget(chat_view)
-
-        self.tab_widget.addTab(chat_widget, "Chat")
+        self.tab_widget.addTab(chat_view, "Chat")
 
     def open_text_file_in_tab(self, file_path):
         with open(file_path, "r") as file:
@@ -972,7 +949,7 @@ class TextEditor(QMainWindow):
 
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
-        current_index = self.tab_widget.currentIndex()
+        current_index: int = self.tab_widget.currentIndex()
         if self.is_unsaved_changes(current_widget):
             file_path = getattr(current_widget, "file_path", None)
             if file_path:
@@ -1086,7 +1063,5 @@ QTabBar::tab:hover {
     color: #303030; 
     cursor: pointer; 
 }
-
-
         """
         self.setStyleSheet(style_sheet)
