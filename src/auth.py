@@ -2,11 +2,6 @@ from flask import Flask, redirect, request, session, url_for
 import requests
 from authlib.integrations.flask_client import OAuth
 import os
-import sys
-import threading
-from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt
 
 
 app = Flask(__name__)
@@ -157,13 +152,3 @@ if not os.path.exists("user-data/about.txt"):
     with open("user-data/about.txt", "w"):
         pass
 
-if __name__ == "__main__":
-    app_thread = threading.Thread(
-        target=app.run, kwargs={"host": "localhost", "port": 5000}
-    )
-    app_thread.daemon = True
-    app_thread.start()
-    window = TextEditor()
-    window.show()
-    app_pyqt = QApplication(sys.argv)
-    sys.exit(app_pyqt.exec_())
