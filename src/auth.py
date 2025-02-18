@@ -151,4 +151,3 @@ if not os.path.exists("user-data/projects.txt"):
 if not os.path.exists("user-data/about.txt"):
     with open("user-data/about.txt", "w"):
         pass
-

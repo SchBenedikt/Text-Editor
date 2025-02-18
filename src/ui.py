@@ -91,7 +91,7 @@ class TextEditor(QMainWindow):
     def init_menu(self):
         menubar = self.menuBar()
         assert menubar is not None
-        
+
         info_menu = menubar.addMenu("Infos")
         assert info_menu is not None
         developer_action = QAction("Developer", self)
@@ -194,9 +194,7 @@ class TextEditor(QMainWindow):
             char_count = len(content)
 
             cursor = current_widget.textCursor()
-            line_number = (
-                cursor.blockNumber() + 1
-            )  
+            line_number = cursor.blockNumber() + 1
 
             self.stats_label.setText(
                 f"Word count: {word_count} | Character count: {char_count}"
@@ -254,13 +252,11 @@ class TextEditor(QMainWindow):
         )
         response = requests.get(release_url)
         if response.status_code == 200:
-            latest_version = response.json().get(
-                "tag_name", "vYYYY.MM.DD"
-            ) 
+            latest_version = response.json().get("tag_name", "vYYYY.MM.DD")
         else:
-            latest_version = "vYYYY.MM.DD"  
+            latest_version = "vYYYY.MM.DD"
 
-        current_version = "v2025.02.02" 
+        current_version = "v2025.02.02"
 
         info_dialog = QDialog(self)
         info_dialog.setWindowTitle("About")
@@ -672,7 +668,7 @@ class TextEditor(QMainWindow):
         if file:
             current_widget = self.tab_widget.currentWidget()
             assert isinstance(current_widget, QTextEdit)
-            
+
             content = current_widget.toPlainText()
             try:
                 with open(file, "w") as f:
@@ -729,9 +725,7 @@ class TextEditor(QMainWindow):
         return runs
 
     def is_unsaved_changes(self, text_widget):
-        if isinstance(
-            text_widget, QTextEdit
-        ):
+        if isinstance(text_widget, QTextEdit):
             content = text_widget.toPlainText()
             return content != "" and content != self.get_file_content(text_widget)
         return False
@@ -953,10 +947,10 @@ class TextEditor(QMainWindow):
 
         self.tab_widget.removeTab(index)
 
-    def closeEvent(self, a0: 'QCloseEvent | None') -> None:
+    def closeEvent(self, a0: "QCloseEvent | None") -> None:
         if a0 is None:
             return
-            
+
         current_widget = self.tab_widget.currentWidget()
         if self.is_unsaved_changes(current_widget):
             reply = QMessageBox.question(
