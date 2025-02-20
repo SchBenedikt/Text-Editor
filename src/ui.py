@@ -1,5 +1,6 @@
 import codecs
 import os
+from typing import Optional
 import re
 import webbrowser
 from base64 import b64decode
@@ -35,7 +36,6 @@ from PyQt6.QtWidgets import (
     QToolBar,
     QFontComboBox,
     QToolButton,
-    QTextEdit,
     QFileDialog,
     QMessageBox,
     QInputDialog,
@@ -44,10 +44,11 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QPushButton,
-    QColorDialog,
 )
 from docx import Document
 from docx.shared import Pt, RGBColor
+
+from widgets.Editor import Editor
 
 
 def get_username_from_about_file():
@@ -187,44 +188,44 @@ class TextEditor(QMainWindow):
         toolbar.setIconSize(QSize(20, 20))
 
         bold_action = QAction(QIcon("images/bold.png"), "Bold", self)
-        bold_action.triggered.connect(self.bold_text)
+        bold_action.triggered.connect(self.toggle_editor_bold)
         toolbar.addAction(bold_action)
 
         italic_action = QAction(QIcon("images/italic.png"), "Italic", self)
-        italic_action.triggered.connect(self.italic_text)
+        italic_action.triggered.connect(self.toggle_editor_italic)
         toolbar.addAction(italic_action)
 
         underline_action = QAction(QIcon("images/underline.png"), "Underline", self)
-        underline_action.triggered.connect(self.underline_text)
+        underline_action.triggered.connect(self.toggle_editor_underline)
         toolbar.addAction(underline_action)
 
         increase_font_action = QAction(
             QIcon("images/increase_font.png"), "Increase Font Size", self
         )
-        increase_font_action.triggered.connect(self.increase_font_size)
+        increase_font_action.triggered.connect(self.increase_editor_font_size)
         toolbar.addAction(increase_font_action)
 
         decrease_font_action = QAction(
             QIcon("images/decrease_font.png"), "Decrease Font Size", self
         )
-        decrease_font_action.triggered.connect(self.decrease_font_size)
+        decrease_font_action.triggered.connect(self.decrease_editor_font_size)
         toolbar.addAction(decrease_font_action)
 
         font_combobox = QFontComboBox(self)
         font_combobox.setCurrentFont(QFont("TkDefaultFont"))
-        font_combobox.currentFontChanged.connect(self.change_font)
+        font_combobox.currentFontChanged.connect(self.change_editor_font)
         toolbar.addWidget(font_combobox)
 
         change_color_action = QAction(
             QIcon("images/change_color.png"), "Change Text Color", self
         )
-        change_color_action.triggered.connect(self.change_text_color)
+        change_color_action.triggered.connect(self.ask_editor_text_color)
         toolbar.addAction(change_color_action)
 
         set_text_background_color = QAction(
             QIcon("images/change_bg_color.png"), "Change Background Color", self
         )
-        set_text_background_color.triggered.connect(self.set_text_background_color)
+        set_text_background_color.triggered.connect(self.ask_editor_text_bg_color)
         toolbar.addAction(set_text_background_color)
 
     def init_tab_bar(self):
@@ -236,7 +237,7 @@ class TextEditor(QMainWindow):
 
     def update_status_bar(self):
         current_widget = self.tab_widget.currentWidget()
-        if isinstance(current_widget, QTextEdit):
+        if isinstance(current_widget, Editor):
             content = current_widget.toPlainText()
 
             word_count = len(re.findall(r"\b\w+\'?\w*\b", content))
@@ -362,7 +363,7 @@ class TextEditor(QMainWindow):
                         )
 
                         current_widget = self.tab_widget.currentWidget()
-                        assert isinstance(current_widget, QTextEdit)
+                        assert isinstance(current_widget, Editor)
                         current_widget.setPlainText(content)
                         self.set_tab_title(current_widget, selected_file)
                 else:
@@ -391,12 +392,12 @@ class TextEditor(QMainWindow):
 
     def undo(self):
         current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
+        assert isinstance(current_widget, Editor)
         current_widget.undo()
 
     def redo(self):
         current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
+        assert isinstance(current_widget, Editor)
         current_widget.redo()
 
     def open_file(self):
@@ -413,7 +414,7 @@ class TextEditor(QMainWindow):
                     continue
             if content is not None:
                 current_widget = self.tab_widget.currentWidget()
-                assert isinstance(current_widget, QTextEdit)
+                assert isinstance(current_widget, Editor)
                 current_widget.setPlainText(content)
                 self.set_tab_title(current_widget, file)
             else:
@@ -427,7 +428,7 @@ class TextEditor(QMainWindow):
 
         if ok:
             current_widget = self.tab_widget.currentWidget()
-            assert isinstance(current_widget, QTextEdit)
+            assert isinstance(current_widget, Editor)
             content = current_widget.toPlainText()
 
             if choice == "Save locally":
@@ -641,9 +642,10 @@ class TextEditor(QMainWindow):
         file, _ = QFileDialog.getSaveFileName(self, "Export as DOCX", filter="*.docx")
         if file:
             doc = Document()
-            current_widget = self.tab_widget.currentWidget()
+            editor_widget = self.get_current_editor()
+            assert editor_widget is not None
             paragraph = doc.add_paragraph()
-            runs = self.get_runs_with_formatting(current_widget)
+            runs = editor_widget.get_runs_with_formatting()
             for run_text, font_format in runs:
                 run = paragraph.add_run(run_text)
                 self.apply_formatting(run, font_format)
@@ -656,7 +658,7 @@ class TextEditor(QMainWindow):
         file, _ = QFileDialog.getSaveFileName(self, "Export as TXT", filter="*.txt")
         if file:
             current_widget = self.tab_widget.currentWidget()
-            assert isinstance(current_widget, QTextEdit)
+            assert isinstance(current_widget, Editor)
 
             content = current_widget.toPlainText()
             try:
@@ -683,38 +685,8 @@ class TextEditor(QMainWindow):
             )
         font.size = Pt(15)
 
-    def get_runs_with_formatting(self, text_widget):
-        cursor = QTextCursor(text_widget.document())
-        cursor.setPosition(0)
-        cursor.movePosition(
-            QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor
-        )
-        selected_text = cursor.selection().toPlainText()
-
-        runs = []
-        start = 0
-        for char in selected_text:
-            cursor.setPosition(start)
-            cursor.movePosition(
-                QTextCursor.MoveOperation.NextCharacter, QTextCursor.MoveMode.KeepAnchor
-            )
-            char_format = cursor.charFormat()
-            runs.append(
-                (
-                    char,
-                    {
-                        "bold": char_format.font().bold(),
-                        "italic": char_format.font().italic(),
-                        "underline": char_format.font().underline(),
-                        "color": char_format.foreground().color().name(),
-                    },
-                )
-            )
-            start += 1
-        return runs
-
     def is_unsaved_changes(self, text_widget):
-        if isinstance(text_widget, QTextEdit):
+        if isinstance(text_widget, Editor):
             content = text_widget.toPlainText()
             return content != "" and content != self.get_file_content(text_widget)
         return False
@@ -729,101 +701,6 @@ class TextEditor(QMainWindow):
             except FileNotFoundError:
                 pass
         return ""
-
-    def bold_text(self):
-        current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
-        cursor = current_widget.textCursor()
-        format = cursor.charFormat()
-        font = format.font()
-        font.setBold(not font.bold())
-        format.setFont(font)
-        cursor.mergeCharFormat(format)
-        current_widget.setFocus()
-
-    def italic_text(self):
-        current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
-        cursor = current_widget.textCursor()
-        format = cursor.charFormat()
-        font = format.font()
-        font.setItalic(not font.italic())
-        format.setFont(font)
-        cursor.mergeCharFormat(format)
-        current_widget.setFocus()
-
-    def underline_text(self):
-        current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
-        cursor = current_widget.textCursor()
-        format = cursor.charFormat()
-        font = format.font()
-        font.setUnderline(not font.underline())
-        format.setFont(font)
-        cursor.mergeCharFormat(format)
-        current_widget.setFocus()
-
-    def increase_font_size(self):
-        current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
-        cursor = current_widget.textCursor()
-        format = cursor.charFormat()
-        font = format.font()
-        font_size = font.pointSize()
-        font_size += 1
-        font.setPointSize(font_size)
-        format.setFont(font)
-        cursor.mergeCharFormat(format)
-        current_widget.setFocus()
-
-    def decrease_font_size(self):
-        current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
-        cursor = current_widget.textCursor()
-        format = cursor.charFormat()
-        font = format.font()
-        font_size = font.pointSize()
-        font_size -= 1
-        font.setPointSize(font_size)
-        format.setFont(font)
-        cursor.mergeCharFormat(format)
-        current_widget.setFocus()
-
-    def change_font(self, font):
-        current_widget = self.tab_widget.currentWidget()
-        assert isinstance(current_widget, QTextEdit)
-        text_cursor = current_widget.textCursor()
-        format = text_cursor.charFormat()
-
-        font_name = font.family()
-        format.setFontFamily(font_name)
-        text_cursor.mergeCharFormat(format)
-        current_widget.setFocus()
-
-    def change_text_color(self):
-        color = QColorDialog.getColor(parent=self)
-        if not color.isValid():
-            print("Invalid color")
-            return
-
-        current_widget = self.tab_widget.currentWidget()
-        if isinstance(current_widget, QTextEdit):
-            cursor = current_widget.textCursor()
-            format = cursor.charFormat()
-            format.setForeground(color)
-            cursor.mergeCharFormat(format)
-            current_widget.setFocus()
-
-    def set_text_background_color(self, color):
-        color = QColorDialog.getColor(parent=self)
-        if color.isValid():
-            current_widget = self.tab_widget.currentWidget()
-            assert isinstance(current_widget, QTextEdit)
-            cursor = current_widget.textCursor()
-            format = cursor.charFormat()
-            format.setBackground(color)
-            cursor.mergeCharFormat(format)
-            current_widget.setFocus()
 
     def open_new_tab(self):
         options = ["New File", "Open File", "Chat"]
@@ -872,6 +749,46 @@ class TextEditor(QMainWindow):
             elif selected_option == "Chat":
                 self.open_chat_tab()
 
+    def toggle_editor_bold(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.bold_text()
+
+    def toggle_editor_italic(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.italic_text()
+
+    def toggle_editor_underline(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.underline_text()
+
+    def change_editor_font(self, font: QFont):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.change_font(font)
+
+    def ask_editor_text_color(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.ask_for_text_color()
+
+    def ask_editor_text_bg_color(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.ask_for_text_bg_color()
+
+    def decrease_editor_font_size(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.decrease_font_size()
+
+    def increase_editor_font_size(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.increase_font_size()
+
     def open_chat_tab(self):
         chat_view = QWebEngineView()
         chat_view.setUrl(QUrl("https://platform.openai.com/"))
@@ -881,7 +798,7 @@ class TextEditor(QMainWindow):
         with open(file_path, "r") as file:
             content = file.read()
 
-        text_area = QTextEdit()
+        text_area = Editor()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
         text_area.setPlainText(content)
@@ -889,7 +806,7 @@ class TextEditor(QMainWindow):
         self.tab_widget.setCurrentWidget(text_area)
 
     def open_empty_tab(self):
-        text_area = QTextEdit()
+        text_area = Editor()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
         text_area.textChanged.connect(self.update_status_bar)
@@ -897,7 +814,7 @@ class TextEditor(QMainWindow):
         self.tab_widget.setCurrentWidget(text_area)
 
     def open_new_empty_tab(self):
-        text_area = QTextEdit()
+        text_area = Editor()
         text_area.setFont(QFont("TkDefaultFont"))
         text_area.textChanged.connect(self.update_tab_title)
         text_area.textChanged.connect(self.update_status_bar)
@@ -972,12 +889,12 @@ class TextEditor(QMainWindow):
         dialog = QPrintDialog(printer, self)
         if dialog.exec() == QPrintDialog.DialogCode.Accepted:
             current_widget = self.tab_widget.currentWidget()
-            assert isinstance(current_widget, QTextEdit)
+            assert isinstance(current_widget, Editor)
             current_widget.print(printer)
 
     def search_word(self, word: str):
         text_edit = self.tab_widget.currentWidget()
-        assert isinstance(text_edit, QTextEdit)
+        assert isinstance(text_edit, Editor)
         text_edit_document = text_edit.document()
         assert isinstance(text_edit_document, QTextDocument)
 
@@ -1023,6 +940,10 @@ class TextEditor(QMainWindow):
         if ok:
             self.search_word(word)
 
+    def get_current_editor(self) -> Optional[Editor]:
+        current_widget = self.tab_widget.currentWidget()
+        return current_widget if isinstance(current_widget, Editor) else None
+
     def set_style_options(self):
         style_sheet = """
 QTabWidget::pane {
@@ -1044,7 +965,6 @@ QTabBar::tab {
     width: 100px;
     height: 10px;
     text-align: center; 
-    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 QTabBar::tab:selected {
@@ -1061,7 +981,6 @@ QTabBar::tab:!selected {
 QTabBar::tab:hover {
     background-color: #a5faf8; 
     color: #303030; 
-    cursor: pointer; 
 }
         """
         self.setStyleSheet(style_sheet)
