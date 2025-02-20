@@ -40,15 +40,13 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QInputDialog,
     QDialog,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView,
     QPushButton,
 )
 from docx import Document
 from docx.shared import Pt, RGBColor
 
 from widgets.Editor import Editor
+from Dialogs.Developers import Developers
 
 
 def get_username_from_about_file():
@@ -91,7 +89,7 @@ class TextEditor(QMainWindow):
         info_menu = menubar.addMenu("Infos")
         assert info_menu is not None
         developer_action = QAction("Developer", self)
-        developer_action.triggered.connect(self.show_developer_action)
+        developer_action.triggered.connect(self.show_developers)
         info_menu.addAction(developer_action)
 
         about_action = QAction("About", self)
@@ -255,43 +253,9 @@ class TextEditor(QMainWindow):
             self.stats_label.setText("")
             self.line_number_label.setText("")
 
-    def show_developer_action(self):
-        developer_info_dialog = QDialog(self)
-        developer_info_dialog.setWindowTitle("Entwickler")
-
-        repo_owner = "SchBenedikt"
-        repo_name = "Text-Editor"
-        repo_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contributors"
-
-        response = requests.get(repo_url)
-        if response.status_code == 200:
-            contributors = response.json()
-
-            table = QTableWidget()
-            table.setRowCount(len(contributors))
-            table.setColumnCount(1)
-            table.setHorizontalHeaderLabels(["Username"])
-
-            for row, contributor in enumerate(contributors):
-                username = contributor.get("login", "Unknown")
-                table.setItem(row, 0, QTableWidgetItem(username))
-
-            layout = QVBoxLayout(developer_info_dialog)
-            layout.addWidget(table)
-
-            table.resizeColumnsToContents()
-            table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-
-            header = table.horizontalHeader()
-            assert isinstance(header, QHeaderView)
-            header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-
-            rect = self.geometry()
-            developer_info_dialog.move(
-                rect.center() - developer_info_dialog.rect().center()
-            )
-            developer_info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-            developer_info_dialog.exec()
+    def show_developers(self):
+        developers_info_dialog = Developers(self)
+        developers_info_dialog.exec()
 
     def show_info_dock(self):
         repo_owner = "SchBenedikt"

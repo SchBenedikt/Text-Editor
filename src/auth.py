@@ -1,6 +1,8 @@
 from flask import Flask, redirect, request, session, url_for
+from typing import cast
 import requests
 from authlib.integrations.flask_client import OAuth
+from authlib.integrations.flask_client.apps import FlaskOAuth2App
 import os
 
 
@@ -8,16 +10,19 @@ app = Flask(__name__)
 app.secret_key = "some_random_string"
 
 oauth = OAuth(app)
-github = oauth.register(
-    name="github",
-    client_id="217973d6a6bd9d3defb9",
-    client_secret="861b796155a2e5a53ab17e68890e70bbeebadae6",
-    access_token_url="https://github.com/login/oauth/access_token",
-    access_token_params=None,
-    authorize_url="https://github.com/login/oauth/authorize",
-    authorize_params=None,
-    api_base_url="https://api.github.com/",
-    client_kwargs={"scope": "user:email"},
+github = cast(
+    FlaskOAuth2App,
+    oauth.register(
+        name="github",
+        client_id="217973d6a6bd9d3defb9",
+        client_secret="861b796155a2e5a53ab17e68890e70bbeebadae6",
+        access_token_url="https://github.com/login/oauth/access_token",
+        access_token_params=None,
+        authorize_url="https://github.com/login/oauth/authorize",
+        authorize_params=None,
+        api_base_url="https://api.github.com/",
+        client_kwargs={"scope": "user:email"},
+    ),
 )
 
 
