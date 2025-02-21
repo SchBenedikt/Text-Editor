@@ -17,10 +17,8 @@ from PyQt6.QtGui import (
     QTextCursor,
     QTextDocument,
     QKeySequence,
-    QDesktopServices,
     QCloseEvent,
     QKeySequence,
-    QDesktopServices,
 )
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -39,14 +37,13 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QInputDialog,
-    QDialog,
-    QPushButton,
 )
 from docx import Document
 from docx.shared import Pt, RGBColor
 
 from widgets.Editor import Editor
 from Dialogs.Developers import Developers
+from Dialogs.About import About
 
 
 def get_username_from_about_file():
@@ -93,7 +90,7 @@ class TextEditor(QMainWindow):
         info_menu.addAction(developer_action)
 
         about_action = QAction("About", self)
-        about_action.triggered.connect(self.show_info_dock)
+        about_action.triggered.connect(self.show_about)
         info_menu.addAction(about_action)
 
         self.info_dock = QDockWidget("Infos", self)
@@ -254,54 +251,12 @@ class TextEditor(QMainWindow):
             self.line_number_label.setText("")
 
     def show_developers(self):
-        developers_info_dialog = Developers(self)
-        developers_info_dialog.exec()
+        developers_dialog = Developers(self)
+        developers_dialog.exec()
 
-    def show_info_dock(self):
-        repo_owner = "SchBenedikt"
-        repo_name = "Text-Editor"
-
-        release_url = (
-            f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
-        )
-        response = requests.get(release_url)
-        if response.status_code == 200:
-            latest_version = response.json().get("tag_name", "vYYYY.MM.DD")
-        else:
-            latest_version = "vYYYY.MM.DD"
-
-        current_version = "v2025.02.02"
-
-        info_dialog = QDialog(self)
-        info_dialog.setWindowTitle("About")
-
-        if latest_version != current_version:
-            label_version = QLabel(
-                f"Current Version: {current_version}\n\nNew Version: {latest_version}",
-                info_dialog,
-            )
-            button_open_release = QPushButton("New release available", info_dialog)
-            button_open_release.clicked.connect(
-                lambda: QDesktopServices.openUrl(QUrl(release_url))
-            )
-        else:
-            label_version = QLabel(f"{current_version}", info_dialog)
-            button_open_release = None
-
-        layout = QVBoxLayout(info_dialog)
-        layout.addWidget(label_version)
-        if button_open_release:
-            layout.addWidget(button_open_release)
-
-        info_dialog.adjustSize()
-        info_dialog.setFixedSize(info_dialog.width() + 10, info_dialog.height() + 10)
-
-        rect = self.geometry()
-        info_dialog.move(rect.center() - info_dialog.rect().center())
-
-        info_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-
-        info_dialog.exec()
+    def show_about(self):
+        about_dialog = About(self)
+        about_dialog.exec()
 
     def open_project(self, project):
         username = get_username_from_about_file()
