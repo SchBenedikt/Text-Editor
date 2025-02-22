@@ -59,7 +59,7 @@ class TextEditor(QMainWindow):
         self._init_menu()
         self._init_toolbar()
         self._init_style()
-        
+
         self.open_empty_tab()
 
     def _init_main_layout(self):
@@ -130,7 +130,7 @@ class TextEditor(QMainWindow):
         )
         set_text_background_color.triggered.connect(self.ask_editor_text_bg_color)
         toolbar.addAction(set_text_background_color)
-    
+
     def _init_menu(self):
         menubar = self.menuBar()
         assert menubar is not None

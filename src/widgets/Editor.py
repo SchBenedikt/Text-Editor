@@ -1,4 +1,10 @@
-from PyQt6.QtWidgets import QTextEdit, QColorDialog, QColorDialog, QInputDialog, QMessageBox
+from PyQt6.QtWidgets import (
+    QTextEdit,
+    QColorDialog,
+    QColorDialog,
+    QInputDialog,
+    QMessageBox,
+)
 from PyQt6.QtGui import QFont, QTextCharFormat, QTextCursor, QTextDocument, QPageSize
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 
