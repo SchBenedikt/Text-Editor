@@ -212,6 +212,17 @@ class TextEditor(QMainWindow):
             project_action.triggered.connect(lambda _, p=project: self.open_project(p))
             projects_menu.addAction(project_action)
 
+    def _init_style(self):
+        style_sheet = ""
+
+        try:
+            with open("./qss/styles.qss", "r") as file:
+                style_sheet = file.read()
+        except Exception as e:
+            print(f"error: {e}")
+
+        self.setStyleSheet(style_sheet)
+
     def update_status_bar(self):
         current_widget = self.tab_widget.currentWidget()
         if isinstance(current_widget, Editor):
@@ -751,29 +762,6 @@ class TextEditor(QMainWindow):
 
         self.tab_widget.removeTab(index)
 
-    def closeEvent(self, a0: "QCloseEvent | None") -> None:
-        if a0 is None:
-            return
-
-        current_widget = self.tab_widget.currentWidget()
-        if self.is_unsaved_changes(current_widget):
-            reply = QMessageBox.question(
-                self,
-                "Unsaved Changes",
-                "There are unsaved changes. Do you want to save before exiting?",
-                QMessageBox.StandardButton.Save
-                | QMessageBox.StandardButton.Discard
-                | QMessageBox.StandardButton.Cancel,
-            )
-            if reply == QMessageBox.StandardButton.Save:
-                self.save_file()
-            elif reply == QMessageBox.StandardButton.Cancel:
-                a0.ignore()
-                return
-        a0.accept()
-        if self.tab_widget.count() == 0:
-            self.close()
-
     def update_tab_title(self):
         current_widget = self.tab_widget.currentWidget()
         current_index: int = self.tab_widget.currentIndex()
@@ -796,43 +784,25 @@ class TextEditor(QMainWindow):
         current_widget = self.tab_widget.currentWidget()
         return current_widget if isinstance(current_widget, Editor) else None
 
-    def _init_style(self):
-        style_sheet = """
-QTabWidget::pane {
-    background-color: #FFFFFF;
-}
+    def closeEvent(self, a0: "QCloseEvent | None") -> None:
+        if a0 is None:
+            return
 
-QTabWidget::tab-bar {
-    alignment: left;
-    height: auto;
-}
-
-QTabBar::tab {
-    background-color: #FFFFFF;
-    color: #050000;
-    border: 1px solid #C0C0C0;
-    padding: 10px 0;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    width: 100px;
-    height: 10px;
-    text-align: center; 
-}
-
-QTabBar::tab:selected {
-    background-color: #FFFFFF;
-    color: #000000;
-    border-bottom-color: #FFFFFF;
-}
-
-QTabBar::tab:!selected {
-    margin-top: 2px;
-    background-color: #ebfcfc;
-}
-
-QTabBar::tab:hover {
-    background-color: #a5faf8; 
-    color: #303030; 
-}
-        """
-        self.setStyleSheet(style_sheet)
+        current_widget = self.tab_widget.currentWidget()
+        if self.is_unsaved_changes(current_widget):
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "There are unsaved changes. Do you want to save before exiting?",
+                QMessageBox.StandardButton.Save
+                | QMessageBox.StandardButton.Discard
+                | QMessageBox.StandardButton.Cancel,
+            )
+            if reply == QMessageBox.StandardButton.Save:
+                self.save_file()
+            elif reply == QMessageBox.StandardButton.Cancel:
+                a0.ignore()
+                return
+        a0.accept()
+        if self.tab_widget.count() == 0:
+            self.close()
