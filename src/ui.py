@@ -7,28 +7,21 @@ from base64 import b64decode
 from urllib.parse import quote
 
 import requests
-from PyQt6.QtCore import Qt, QSize, QUrl, QFileInfo
+from PyQt6.QtCore import QSize, QUrl, QFileInfo
 from PyQt6.QtGui import (
-    QPageSize,
     QIcon,
     QFont,
     QAction,
     QColor,
-    QTextCursor,
-    QTextDocument,
     QKeySequence,
     QCloseEvent,
     QKeySequence,
 )
-from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import (
     QStatusBar,
     QMainWindow,
     QTabWidget,
-    QDockWidget,
-    QWidget,
-    QVBoxLayout,
     QLabel,
     QApplication,
     QToolBar,
@@ -61,123 +54,38 @@ class TextEditor(QMainWindow):
         self.setWindowTitle("Text Editor")
         self.setGeometry(100, 100, 800, 600)
 
+        self._init_main_layout()
+        self._init_status_bar()
+        self._init_menu()
+        self._init_toolbar()
+        self._init_style()
+        
+        self.open_empty_tab()
+
+    def _init_main_layout(self):
         self.tab_widget = QTabWidget(self)
         self.setCentralWidget(self.tab_widget)
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.tabCloseRequested.connect(self.close_tab)
 
-        self.init_menu()
-        self.init_toolbar()
-        self.init_tab_bar()
+        new_tab_button = QToolButton(self)
+        new_tab_button.setText("+")
+        new_tab_button.setStyleSheet("QToolButton { font-size: 20px; }")
+        new_tab_button.clicked.connect(self.open_new_tab)
+        self.tab_widget.setCornerWidget(new_tab_button)
 
+    def _init_status_bar(self):
         self.status_bar = QStatusBar()
-        self.stats_label = QLabel("Word count: 0 | Character count: 0", self)
-        self.status_bar.addWidget(self.stats_label)
+        self.stats_worl_count = QLabel("Word count: 0", self)
+        self.stats_character_count = QLabel("Character count: 0", self)
+        self.status_bar.addWidget(self.stats_worl_count)
+        self.status_bar.addWidget(self.stats_character_count)
         self.line_number_label = QLabel()
         self.status_bar.addPermanentWidget(self.line_number_label)
         self.setStatusBar(self.status_bar)
 
-        self.open_empty_tab()
-
-    def init_menu(self):
-        menubar = self.menuBar()
-        assert menubar is not None
-
-        info_menu = menubar.addMenu("Infos")
-        assert info_menu is not None
-        developer_action = QAction("Developer", self)
-        developer_action.triggered.connect(self.show_developers)
-        info_menu.addAction(developer_action)
-
-        about_action = QAction("About", self)
-        about_action.triggered.connect(self.show_about)
-        info_menu.addAction(about_action)
-
-        self.info_dock = QDockWidget("Infos", self)
-        self.info_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
-        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.info_dock)
-
-        dock_content = QWidget()
-        dock_layout = QVBoxLayout(dock_content)
-        self.label_word_count = QLabel()
-        self.label_char_count = QLabel()
-        dock_layout.addWidget(self.label_word_count)
-        dock_layout.addWidget(self.label_char_count)
-
-        self.info_dock.setWidget(dock_content)
-        self.info_dock.hide()
-
-        file_menu = menubar.addMenu("File")
-        assert file_menu is not None
-        open_action = QAction("Open", self)
-        open_action.triggered.connect(self.open_file)
-        file_menu.addAction(open_action)
-
-        new_tab_action = QAction("New Tab", self)
-        new_tab_action.setShortcut(QKeySequence("Ctrl+T"))
-        new_tab_action.triggered.connect(self.open_new_tab)
-        file_menu.addAction(new_tab_action)
-
-        search_action = QAction("Search Word", self)
-        search_action.setShortcut(QKeySequence("Ctrl+F"))
-        search_action.triggered.connect(self.show_search_dialog)
-        file_menu.addAction(search_action)
-
-        exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(QApplication.quit)
-        file_menu.addAction(exit_action)
-
-        save_menu = menubar.addMenu("Save")
-        assert save_menu is not None
-        save_action = QAction("Save", self)
-        save_action.setShortcut(QKeySequence("Ctrl+S"))
-        save_action.triggered.connect(self.save_file)
-        save_menu.addAction(save_action)
-
-        export_docx_action = QAction("Export as DOCX", self)
-        export_docx_action.triggered.connect(self.export_as_docx)
-        save_menu.addAction(export_docx_action)
-
-        export_txt_action = QAction("Export as TXT", self)
-        export_txt_action.triggered.connect(self.export_as_txt)
-        save_menu.addAction(export_txt_action)
-
-        print_action = QAction("Print", self)
-        print_action.setShortcut(QKeySequence("Ctrl+P"))
-        print_action.triggered.connect(self.print_document)
-        save_menu.addAction(print_action)
-
-        edit_menu = menubar.addMenu("Edit")
-        assert edit_menu is not None
-        undo_action = QAction("Undo", self)
-        undo_action.setShortcut(QKeySequence.StandardKey.Undo)
-        undo_action.triggered.connect(self.undo)
-        edit_menu.addAction(undo_action)
-
-        redo_action = QAction("Redo", self)
-        redo_action.setShortcut(QKeySequence.StandardKey.Redo)
-        redo_action.triggered.connect(self.redo)
-        edit_menu.addAction(redo_action)
-
-        projects_menu = menubar.addMenu("Projects")
-        assert projects_menu is not None
-        login_action = QAction("Login", self)
-        login_action.triggered.connect(self.start_webserver)
-        projects_menu.addAction(login_action)
-
-        projects = self.load_projects()
-        if projects:
-            projects_menu.addSeparator()
-
-        self.set_style_options()
-
-        for project in projects:
-            project_action = QAction(project, self)
-            project_action.triggered.connect(lambda _, p=project: self.open_project(p))
-            projects_menu.addAction(project_action)
-
-    def init_toolbar(self):
-        toolbar = QToolBar(self)
+    def _init_toolbar(self):
+        toolbar = QToolBar("Format Toolbar", self)
         self.addToolBar(toolbar)
 
         toolbar.setIconSize(QSize(20, 20))
@@ -222,13 +130,87 @@ class TextEditor(QMainWindow):
         )
         set_text_background_color.triggered.connect(self.ask_editor_text_bg_color)
         toolbar.addAction(set_text_background_color)
+    
+    def _init_menu(self):
+        menubar = self.menuBar()
+        assert menubar is not None
 
-    def init_tab_bar(self):
-        add_tab_button = QToolButton(self)
-        add_tab_button.setText("+")
-        add_tab_button.setStyleSheet("QToolButton { font-size: 20px; }")
-        add_tab_button.clicked.connect(self.open_new_tab)
-        self.tab_widget.setCornerWidget(add_tab_button)
+        info_menu = menubar.addMenu("Infos")
+        assert info_menu is not None
+        developer_action = QAction("Developer", self)
+        developer_action.triggered.connect(self.show_developers)
+        info_menu.addAction(developer_action)
+
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about)
+        info_menu.addAction(about_action)
+
+        file_menu = menubar.addMenu("File")
+        assert file_menu is not None
+        open_action = QAction("Open", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        new_tab_action = QAction("New Tab", self)
+        new_tab_action.setShortcut(QKeySequence("Ctrl+T"))
+        new_tab_action.triggered.connect(self.open_new_tab)
+        file_menu.addAction(new_tab_action)
+
+        search_action = QAction("Search Word", self)
+        search_action.setShortcut(QKeySequence("Ctrl+F"))
+        search_action.triggered.connect(self.open_editor_find)
+        file_menu.addAction(search_action)
+
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(QApplication.quit)
+        file_menu.addAction(exit_action)
+
+        save_menu = menubar.addMenu("Save")
+        assert save_menu is not None
+        save_action = QAction("Save", self)
+        save_action.setShortcut(QKeySequence("Ctrl+S"))
+        save_action.triggered.connect(self.save_file)
+        save_menu.addAction(save_action)
+
+        export_docx_action = QAction("Export as DOCX", self)
+        export_docx_action.triggered.connect(self.export_as_docx)
+        save_menu.addAction(export_docx_action)
+
+        export_txt_action = QAction("Export as TXT", self)
+        export_txt_action.triggered.connect(self.export_as_txt)
+        save_menu.addAction(export_txt_action)
+
+        print_action = QAction("Print", self)
+        print_action.setShortcut(QKeySequence("Ctrl+P"))
+        print_action.triggered.connect(self.print_editor)
+        save_menu.addAction(print_action)
+
+        edit_menu = menubar.addMenu("Edit")
+        assert edit_menu is not None
+        undo_action = QAction("Undo", self)
+        undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        undo_action.triggered.connect(self.undo)
+        edit_menu.addAction(undo_action)
+
+        redo_action = QAction("Redo", self)
+        redo_action.setShortcut(QKeySequence.StandardKey.Redo)
+        redo_action.triggered.connect(self.redo)
+        edit_menu.addAction(redo_action)
+
+        projects_menu = menubar.addMenu("Projects")
+        assert projects_menu is not None
+        login_action = QAction("Login", self)
+        login_action.triggered.connect(self.start_webserver)
+        projects_menu.addAction(login_action)
+
+        projects = self.load_projects()
+        if projects:
+            projects_menu.addSeparator()
+
+        for project in projects:
+            project_action = QAction(project, self)
+            project_action.triggered.connect(lambda _, p=project: self.open_project(p))
+            projects_menu.addAction(project_action)
 
     def update_status_bar(self):
         current_widget = self.tab_widget.currentWidget()
@@ -241,13 +223,12 @@ class TextEditor(QMainWindow):
             cursor = current_widget.textCursor()
             line_number = cursor.blockNumber() + 1
 
-            self.stats_label.setText(
-                f"Word count: {word_count} | Character count: {char_count}"
-            )
-
+            self.stats_worl_count.setText(f"Word count: {word_count}")
+            self.stats_character_count.setText(f"Character count: {char_count}")
             self.line_number_label.setText(f"Line: {line_number}")
         else:
-            self.stats_label.setText("")
+            self.stats_worl_count.setText("")
+            self.stats_character_count.setText("")
             self.line_number_label.setText("")
 
     def show_developers(self):
@@ -708,6 +689,16 @@ class TextEditor(QMainWindow):
         assert current_editor is not None
         current_editor.increase_font_size()
 
+    def open_editor_find(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.open_search()
+
+    def print_editor(self):
+        current_editor = self.get_current_editor()
+        assert current_editor is not None
+        current_editor.print_document()
+
     def open_chat_tab(self):
         chat_view = QWebEngineView()
         chat_view.setUrl(QUrl("https://platform.openai.com/"))
@@ -801,69 +792,11 @@ class TextEditor(QMainWindow):
             else:
                 self.tab_widget.setTabText(current_index, "Untitled")
 
-    def print_document(self):
-        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-
-        dialog = QPrintDialog(printer, self)
-        if dialog.exec() == QPrintDialog.DialogCode.Accepted:
-            current_widget = self.tab_widget.currentWidget()
-            assert isinstance(current_widget, Editor)
-            current_widget.print(printer)
-
-    def search_word(self, word: str):
-        text_edit = self.tab_widget.currentWidget()
-        assert isinstance(text_edit, Editor)
-        text_edit_document = text_edit.document()
-        assert isinstance(text_edit_document, QTextDocument)
-
-        cursor = QTextCursor(text_edit.document())
-
-        if cursor.hasSelection():
-            cursor.clearSelection()
-
-        found: bool = False
-        while True:
-            cursor = text_edit_document.find(word, cursor)
-
-            if cursor.isNull():
-                break
-
-            found = True
-
-            cursor.select(QTextCursor.SelectionType.WordUnderCursor)
-            text_edit.setTextCursor(cursor)
-            text_edit.ensureCursorVisible()
-
-            reply = QMessageBox.question(
-                self,
-                "Word Found",
-                f"The word '{word}' was found in the document. Do you want to continue searching?",
-                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
-
-            if reply == QMessageBox.StandardButton.No:
-                break
-
-        if not found:
-            QMessageBox.information(
-                self,
-                "Word Not Found",
-                f"The word '{word}' was not found in the document.",
-            )
-
-    def show_search_dialog(self):
-        word, ok = QInputDialog.getText(
-            self, "Search Word", "Enter the word to search:"
-        )
-        if ok:
-            self.search_word(word)
-
     def get_current_editor(self) -> Optional[Editor]:
         current_widget = self.tab_widget.currentWidget()
         return current_widget if isinstance(current_widget, Editor) else None
 
-    def set_style_options(self):
+    def _init_style(self):
         style_sheet = """
 QTabWidget::pane {
     background-color: #FFFFFF;

@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QTextEdit, QColorDialog, QColorDialog
-from PyQt6.QtGui import QFont, QTextCharFormat, QTextCursor
+from PyQt6.QtWidgets import QTextEdit, QColorDialog, QColorDialog, QInputDialog, QMessageBox
+from PyQt6.QtGui import QFont, QTextCharFormat, QTextCursor, QTextDocument, QPageSize
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 
 
 class Editor(QTextEdit):
@@ -119,3 +120,57 @@ class Editor(QTextEdit):
             )
             start += 1
         return runs
+
+    def open_search(self):
+        word, ok = QInputDialog.getText(
+            self, "Search Word", "Enter the word to search:"
+        )
+        if ok:
+            self.search_word(word)
+
+    def search_word(self, word: str):
+        document = self.document()
+        assert isinstance(document, QTextDocument)
+
+        cursor = QTextCursor(document)
+
+        if cursor.hasSelection():
+            cursor.clearSelection()
+
+        found: bool = False
+        while True:
+            cursor = document.find(word, cursor)
+
+            if cursor.isNull():
+                break
+
+            found = True
+
+            cursor.select(QTextCursor.SelectionType.WordUnderCursor)
+            self.setTextCursor(cursor)
+            self.ensureCursorVisible()
+
+            reply = QMessageBox.question(
+                self,
+                "Word Found",
+                f"The word '{word}' was found in the document. Do you want to continue searching?",
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+
+            if reply == QMessageBox.StandardButton.No:
+                break
+
+        if not found:
+            QMessageBox.information(
+                self,
+                "Word Not Found",
+                f"The word '{word}' was not found in the document.",
+            )
+
+    def print_document(self):
+        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+
+        dialog = QPrintDialog(printer, self)
+        if dialog.exec() == QPrintDialog.DialogCode.Accepted:
+            self.print(printer)
