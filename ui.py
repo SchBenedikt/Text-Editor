@@ -991,7 +991,9 @@ class TextEditor(QMainWindow):
     def set_style_options(self):
         style_sheet = """
 QTabWidget::pane {
-    background-color: #FFFFFF;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #FFFFFF, stop:1 #E0E0E0);
+    border: 1px solid #C0C0C0;
+    border-radius: 4px;
 }
 
 QTabWidget::tab-bar {
@@ -1000,7 +1002,7 @@ QTabWidget::tab-bar {
 }
 
 QTabBar::tab {
-    background-color: #FFFFFF;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F0F0F0, stop:1 #D0D0D0);
     color: #050000;
     border: 1px solid #C0C0C0;
     padding: 10px 0;
@@ -1013,18 +1015,19 @@ QTabBar::tab {
 }
 
 QTabBar::tab:selected {
-    background-color: #FFFFFF;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #E0E0E0, stop:1 #C0C0C0);
     color: #000000;
+    font-weight: bold;
     border-bottom-color: #FFFFFF;
 }
 
 QTabBar::tab:!selected {
     margin-top: 2px;
-    background-color: #ebfcfc;
+    background-color: #F0F0F0;
 }
 
 QTabBar::tab:hover {
-    background-color: #a5faf8; 
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #D0D0D0, stop:1 #B0B0B0);
     color: #303030; 
     cursor: pointer; 
 }
