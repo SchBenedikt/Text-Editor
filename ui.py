@@ -378,13 +378,47 @@ class TextEditor(QMainWindow):
         set_text_background_color.triggered.connect(self.set_text_background_color)
         toolbar.addAction(set_text_background_color)
 
-       
+        # Add new modern icons and improved layout
+        toolbar.setStyleSheet("""
+            QToolBar {
+                background-color: #f0f0f0;
+                border: 1px solid #dcdcdc;
+            }
+            QToolButton {
+                margin: 5px;
+                padding: 5px;
+            }
+        """)
+
     def init_tab_bar(self):
         add_tab_button = QToolButton(self)
         add_tab_button.setText("+")
         add_tab_button.setStyleSheet("QToolButton { font-size: 20px; }")
         add_tab_button.clicked.connect(self.open_new_tab)
         self.tab_widget.setCornerWidget(add_tab_button)
+
+        # Enhance the tab bar with a more modern design and better styling
+        self.tab_widget.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #dcdcdc;
+                background-color: #f9f9f9;
+            }
+            QTabBar::tab {
+                background-color: #e0e0e0;
+                border: 1px solid #c0c0c0;
+                padding: 10px;
+                margin: 2px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+            QTabBar::tab:selected {
+                background-color: #ffffff;
+                border-bottom-color: #ffffff;
+            }
+            QTabBar::tab:hover {
+                background-color: #d0d0d0;
+            }
+        """)
 
     def open_file(self):
         file, _ = QFileDialog.getOpenFileName(self, "Open File")
@@ -995,6 +1029,16 @@ QTabBar::tab:hover {
     cursor: pointer; 
 }
 
+QStatusBar {
+    background-color: #f0f0f0;
+    border-top: 1px solid #dcdcdc;
+    padding: 5px;
+    font-size: 12px;
+    color: #333333;
+}
 
+QLabel {
+    margin-right: 10px;
+}
         """
         self.setStyleSheet(style_sheet)
