@@ -1,26 +1,18 @@
-from PyQt6.QtWidgets import QApplication
-from auth import app
-from ui import TextEditor
 import sys
-import threading
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from PyQt6.QtWidgets import QApplication
+from ui.ui import TextEditor
+from auth import login_to_github, github
 
-def run_flask_app():
-    app.run(host="127.0.0.1", port=5000)
-
-
-def main():
-    # Start Flask app in a separate thread
-    flask_thread = threading.Thread(target=run_flask_app)
-    flask_thread.daemon = True
-    flask_thread.start()
-
-    # Start PyQt app
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     editor = TextEditor()
     editor.show()
+    
+    # Handle GitHub login
+    if github is None:
+        login_to_github()
+    
     sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()

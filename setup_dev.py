@@ -8,50 +8,46 @@ import os
 import sys
 
 def create_env_file():
-    """Create .env file with prompts for credentials."""
+    """Create .env file for local configuration."""
     
     if os.path.exists('.env'):
-        print("✅ .env file already exists!")
+        print("✅ .env file already exists! Skipping creation.")
         return
     
     print("🔧 Setting up your development environment...")
-    print("\n📋 You'll need GitHub OAuth credentials from:")
-    print("   https://github.com/settings/applications/new")
-    print("\n💡 For development, you can use these settings:")
-    print("   Application name: Text Editor Dev")
-    print("   Homepage URL: http://localhost:5000")
-    print("   Authorization callback URL: http://127.0.0.1:5000/callback")
+
+    # GitHub credentials are now hardcoded in auth.py.
     
-    # Get credentials from user
+    # Get Ollama config from user
     print("\n" + "="*50)
-    client_id = input("Enter your GitHub Client ID: ").strip()
-    client_secret = input("Enter your GitHub Client Secret: ").strip()
-    redirect_uri = input("Enter the Authorization callback URL (default: http://127.0.0.1:5000/callback): ").strip() or "http://127.0.0.1:5000/callback"
-    
-    # Generate a random secret key
+    print("Ollama is used for local AI features.")
+    ollama_host = input("Enter your Ollama Host URL (default: http://localhost:11434): ").strip() or "http://localhost:11434"
+    ollama_model = input("Enter the default Ollama model to use (default: llama3): ").strip() or "llama3"
+
+    # Generate a random secret key for Flask
     import secrets
     flask_secret = secrets.token_hex(32)
     
     # Create .env file
-    env_content = f"""# GitHub OAuth Configuration
-GITHUB_CLIENT_ID={client_id}
-GITHUB_CLIENT_SECRET={client_secret}
-OAUTH_REDIRECT_URI={redirect_uri}
-
-# Flask Configuration  
+    env_content = f"""# Flask Configuration  
 FLASK_SECRET_KEY={flask_secret}
+
+# Ollama Configuration
+OLLAMA_HOST={ollama_host}
+OLLAMA_MODEL={ollama_model}
 """
     
     with open('.env', 'w') as f:
         f.write(env_content)
     
     print("\n✅ Created .env file successfully!")
-    print("🔒 Your credentials are now secure and NOT in git history.")
+    print("🔒 Your GitHub credentials are now hardcoded in auth.py. This is a security risk.")
 
 def install_dependencies():
-    """Install required dependencies."""
-    print("\n📦 Installing dependencies...")
-    os.system("pip install -r requirements.txt")
+    """Install required dependencies from requirements.txt."""
+    print("\n📦 Installing/updating dependencies...")
+    # Use --upgrade to ensure all packages are at the versions specified.
+    os.system(f"{sys.executable} -m pip install -r requirements.txt --upgrade")
 
 def main():
     print("🚀 Text Editor Development Setup")
@@ -70,7 +66,7 @@ def main():
     
     print("\n🎉 Setup complete! You can now run:")
     print("   python main.py")
-    print("\n💡 Pro tip: Your credentials are secure in .env (which is git-ignored)")
+    print("\n💡 Pro tip: For better security, consider moving the hardcoded GitHub credentials from auth.py to the .env file.")
 
 if __name__ == "__main__":
     main() 
