@@ -2,10 +2,10 @@ import os
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QTextEdit, QStatusBar, QLabel, 
-    QMessageBox, QInputDialog, QFileDialog, QToolBar, QMenuBar, QMenu
+    QMessageBox, QInputDialog, QFileDialog, QToolBar, QMenuBar, QMenu, QProgressDialog
 )
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QTextCharFormat, QContextMenuEvent
-from PyQt6.QtCore import QObject, QThread, pyqtSignal, Qt
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, Qt, QProcess
 from typing import cast
 
 from ai import get_ollama_response, PROMPTS
@@ -205,4 +205,48 @@ class TextEditor(QMainWindow):
                 self.tab_widget.setTabText(self.tab_widget.currentIndex(), os.path.basename(path))
                 self.status_bar.showMessage(f"Saved to {path}", 5000)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to save file: {e}") 
+                QMessageBox.critical(self, "Error", f"Failed to save file: {e}")
+
+    def download_model(self):
+        from PyQt6.QtWidgets import QMessageBox
+        from PyQt6.QtCore import QProcess, Qt
+
+        model = os.getenv("OLLAMA_MODEL", "llama3")
+        host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+
+        # Progress Dialog
+        progress = QProgressDialog(f"Downloading {model}...", "Cancel", 0, 0, self)
+        progress.setWindowTitle("Download Model")
+        progress.setWindowModality(Qt.WindowModal)  # type: ignore[attr-defined]
+        progress.show()
+
+        # Start external process: ollama pull
+        process = QProcess(self)
+        process.setProgram("ollama")
+        process.setArguments(["pull", model])
+        # Pass Ollama host via env
+        env = process.processEnvironment()
+        env.insert("OLLAMA_HOST", host)
+        process.setProcessEnvironment(env)
+
+        # Update progress label with CLI output
+        process.readyReadStandardOutput.connect(
+            lambda: progress.setLabelText(process.readAllStandardOutput().data().decode(errors="ignore").strip())
+        )
+        process.readyReadStandardError.connect(
+            lambda: progress.setLabelText(process.readAllStandardError().data().decode(errors="ignore").strip())
+        )
+
+        # Cancel button kills the process
+        progress.canceled.connect(process.kill)
+
+        # On finish, close dialog and notify
+        def on_finished(exitCode, exitStatus):
+            progress.close()
+            if exitCode == 0:
+                QMessageBox.information(self, "Download Model", f"Model {model} downloaded successfully.")
+            else:
+                QMessageBox.warning(self, "Download Model", f"Model download failed (exit code {exitCode}).")
+
+        process.finished.connect(on_finished)
+        process.start() 
