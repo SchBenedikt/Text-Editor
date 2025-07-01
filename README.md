@@ -9,6 +9,7 @@ A modern text editor built with Python and PyQt6, featuring seamless integration
 *   **File Operations**: Open, save, and export files as DOCX.
 *   **Rich Text Formatting**: Bold, italic, underline, change font, and adjust font size.
 *   **Tabbed Interface**: Work on multiple documents in separate tabs.
+*   **AI Guided**: You can enable the AI fixing function if you download Ollama to run the models locally.
 *   **GitHub Integration**:
     *   Authenticate with your GitHub account.
     *   View your repositories.
