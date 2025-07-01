@@ -18,7 +18,10 @@ To test the text editor, follow these steps:
 - **Run the text editor**<br>
   Execute the main Python script to launch the text editor application:<br>
   ```python text_editor.py```
-
+- **If QT Engine does not work**<br>
+  Run this command as an administrator:<br>
+  ```setx PATH "%PATH%;%LOCALAPPDATA%\Programs\Python\Python311\Lib\site-packages\PyQt6\Qt6\bin"```
+  
 # [❇️ Features](https://github.com/SchBenedikt/Text-Editor/wiki/Features)
 The text editor window will open, allowing you to perform various operations. You can open existing files, save files, and export files as DOCX documents. Additionally, you can apply formatting to the text, such as bold, italic, and underline.
 More features can be found in the Wiki.<br>
