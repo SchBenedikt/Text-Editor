@@ -17,7 +17,7 @@ To test the text editor, follow these steps:
 
 - **Run the text editor**<br>
   Execute the main Python script to launch the text editor application:<br>
-  ```python text_editor.py```
+  ```python main.py```
 - **If QT Engine does not work**<br>
   Run this command as an administrator:<br>
   ```setx PATH "%PATH%;%LOCALAPPDATA%\Programs\Python\Python311\Lib\site-packages\PyQt6\Qt6\bin"```
