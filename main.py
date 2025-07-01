@@ -1,16 +1,18 @@
-from auth import app
-from ui import TextEditor
 import sys
-import threading
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from PyQt6.QtWidgets import QApplication
+from ui.ui import TextEditor
+from auth import login_to_github, github
 
-if __name__ == "__main__":
-    app_thread = threading.Thread(target=app.run, kwargs={"host": "localhost", "port": 5000})
-    app_thread.daemon = True
-    app_thread.start()
-
-    app_pyqt = QApplication(sys.argv)
-    window = TextEditor()
-    window.show()
-
-    sys.exit(app_pyqt.exec())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    editor = TextEditor()
+    editor.show()
+    
+    # Handle GitHub login
+    if github is None:
+        login_to_github()
+    
+    sys.exit(app.exec())

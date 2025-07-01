@@ -173,3 +173,21 @@ cython_debug/
 # user data
 projects.txt
 about.txt
+github_token.txt
+
+# Environment variables (contains sensitive credentials)
+.env.local
+.env.production
+
+# Generated files
+upload_data.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

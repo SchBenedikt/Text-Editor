@@ -1,47 +1,80 @@
-# Text-Editor
-A text editor programmed with Python and PyQt6 with integration to Microsoft Word.<br>
-**Read WIKI for full instruction turorial + features**
+# Text Editor
 
-# 🛫 Get started
-This repository contains the code for a simple text editor implemented in Python. The text editor allows users to open, save, and export files, as well as apply formatting such as bold, italic, and underline. This post provides instructions on how to test the text editor.
+A modern text editor built with Python and PyQt6, featuring seamless integration with GitHub for version control and collaboration.
 
-To test the text editor, follow these steps:
+![image](https://github.com/user-attachments/assets/98dcd5af-6dae-4e01-b083-66c8709d1d62)
 
-- **Clone the repository**<br>
-  Use the following command to clone the repository to your local machine:<br>
-  ```git clone https://github.com/SchBenedikt/Text-Editor.git```
+## ✨ Features
 
-- **Install the dependencies**<br>
-  Navigate to the cloned repository and install the required dependencies by running the following command:<br>
-  ```pip install -r requirements.txt```
+*   **File Operations**: Open, save, and export files as DOCX.
+*   **Rich Text Formatting**: Bold, italic, underline, change font, and adjust font size.
+*   **Tabbed Interface**: Work on multiple documents in separate tabs.
+*   **GitHub Integration**:
+    *   Authenticate with your GitHub account.
+    *   View your repositories.
+    *   (Coming soon) Save files directly to your GitHub repositories.
 
-- **Run the text editor**<br>
-  Execute the main Python script to launch the text editor application:<br>
-  ```python text_editor.py```
+## 🚀 Getting Started
 
-# [❇️ Features](https://github.com/SchBenedikt/Text-Editor/wiki/Features)
-The text editor window will open, allowing you to perform various operations. You can open existing files, save files, and export files as DOCX documents. Additionally, you can apply formatting to the text, such as bold, italic, and underline.
-More features can be found in the Wiki.<br>
-[Text-Editor - Wiki](https://github.com/SchBenedikt/Text-Editor/wiki/Features)
+Follow these steps to set up your development environment.
 
-- **Open File**: Open existing text files for viewing and editing.
-- **Save File**: Save the content of the active tab as a text file.
-- **Export as DOCX**: Export the content of the active tab as a DOCX (Microsoft Word) file.
-- **Bold, Italic, Underline**: Apply formatting styles to selected text or newly entered text.
-- **Increase Font Size**: Increase the font size of selected or new text.
-- **Change Font**: Select a different font for selected or new text.
-- **New Tab**: Create a new tab to work on multiple documents simultaneously.
-- **Close Tab**: Close the currently active tab, with a prompt for unsaved changes.
+### Prerequisites
 
-# Screenshots
-![image](https://github.com/SchBenedikt/Text-Editor/assets/137323528/84378902-e87f-405a-aed1-8f0437417dc3)
-![image](https://github.com/SchBenedikt/Text-Editor/assets/137323528/191ffcd3-89da-4711-8e73-5e0ab45e7923)
+*   Python 3.8+
+*   `pip` and `git` installed.
 
-## Contributing
-Contributions to the Text Editor are welcome! If you encounter any issues or have ideas for improvements, feel free to submit a pull request or open an issue on GitHub.
+### ⚙️ Installation & Setup
 
-That's it! You have now tested the text editor and verified its functionality. Feel free to explore and modify the code to suit your requirements.
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/SchBenedikt/Text-Editor.git
+    cd Text-Editor
+    ```
 
-For any issues or further assistance, please open an issue on the GitHub repository or reach out to the project maintainers.
+2.  **Run the setup script:**
+    This script will install dependencies and guide you through creating a `.env` file for your GitHub credentials.
+    ```bash
+    python setup_dev.py
+    ```
 
-Happy testing!
+3.  **Create a GitHub OAuth App:**
+    The setup script will prompt you for your GitHub OAuth credentials. You can create them here: [https://github.com/settings/applications/new](https://github.com/settings/applications/new)
+
+    Use the following settings for your OAuth App:
+    *   **Application name:** Text Editor Dev (or any name you prefer)
+    *   **Homepage URL:** `http://localhost:5000`
+    *   **Authorization callback URL:** `http://127.0.0.1:5000/callback`
+
+    After creating the app, copy the "Client ID" and generate a "Client Secret". Paste these into the terminal when the setup script asks for them.
+
+### ▶️ Running the Application
+
+Once the setup is complete, you can run the text editor:
+```bash
+python main.py
+```
+If you encounter issues with QT plugins on Windows, you may need to add the PyQt6 Qt bin directory to your `PATH`. You can do this by running the following command in an administrator terminal:
+```powershell
+setx PATH "%PATH%;%LOCALAPPDATA%\Programs\Python\Python311\Lib\site-packages\PyQt6\Qt6\bin"
+```
+*(Adjust the Python version in the path if necessary)*
+
+## 🗺️ Roadmap
+
+We have an ambitious roadmap for the Text Editor. Our plans are outlined in the [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md). Key highlights include:
+
+*   **Refactoring:** Splitting the UI into more manageable modules.
+*   **Features:** Implementing auto-save and improving GitHub integration.
+*   **Quality:** Adding comprehensive logging and unit tests.
+
+## 🤝 Contributing
+
+Contributions are welcome! We have a lot of work to do and would appreciate your help.
+
+*   Check out our [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md) to see what we're working on.
+*   Feel free to open an [issue](https://github.com/SchBenedikt/Text-Editor/issues) for bug reports or feature requests.
+*   Submit a [pull request](https://github.com/SchBenedikt/Text-Editor/pulls) with your changes.
+
+## 📄 License
+
+This project is licensed under the terms of the [LICENSE](LICENSE) file.
