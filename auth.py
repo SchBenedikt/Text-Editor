@@ -7,17 +7,20 @@ import threading
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
+from dotenv import load_dotenv
+import json
 
-
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "some_random_string"  # Replace with your secret key
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev_key_change_in_production")
 
 oauth = OAuth(app)
 github = oauth.register(
     name="github",
-    client_id="217973d6a6bd9d3defb9",
-    client_secret="861b796155a2e5a53ab17e68890e70bbeebadae6",
+    client_id=os.getenv("GITHUB_CLIENT_ID"),
+    client_secret=os.getenv("GITHUB_CLIENT_SECRET"),
     access_token_url="https://github.com/login/oauth/access_token",
     access_token_params=None,
     authorize_url="https://github.com/login/oauth/authorize",
@@ -25,6 +28,67 @@ github = oauth.register(
     api_base_url="https://api.github.com/",
     client_kwargs={"scope": "user:email"},
 )
+
+TOKEN_FILE = "github_token.txt"
+
+
+def load_stored_token():
+    """Return the stored access token if it exists, else None."""
+    if os.path.exists(TOKEN_FILE):
+        try:
+            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+                token = f.read().strip()
+                return token or None
+        except (IOError, OSError):
+            return None
+    return None
+
+
+def save_token(token: str):
+    """Persist the GitHub access token for future automatic logins."""
+    try:
+        with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+            f.write(token)
+    except (IOError, OSError):
+        # Failing to save the token should not break the app
+        pass
+
+
+def validate_token(token: str) -> bool:
+    """Check if the provided token is still valid by querying the GitHub API."""
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    try:
+        response = requests.get("https://api.github.com/user", headers=headers, timeout=10)
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+
+def get_username_from_token(token: str):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    response = requests.get("https://api.github.com/user", headers=headers)
+    if response.status_code == 200:
+        return response.json().get("login")
+    return None
+
+
+@app.before_request
+def auto_login():
+    """Automatically log the user in via stored token if session is empty."""
+    if "access_token" not in session:
+        token = load_stored_token()
+        if token and validate_token(token):
+            session["access_token"] = token
+            username = get_username_from_token(token)
+            if username:
+                session["username"] = username
+
 
 @app.route("/")
 def index():
@@ -52,7 +116,10 @@ def login():
         return redirect(url_for("index"))
 
     # User is not authenticated, start the OAuth process
-    return github.authorize_redirect(url_for("callback", _external=True))
+    # GitHub requires the redirect URI here to EXACTLY match the value stored in the OAuth-app settings.
+    # Allow overriding via env (OAUTH_REDIRECT_URI); otherwise fall back to flask's external URL.
+    redirect_uri = os.getenv("OAUTH_REDIRECT_URI", url_for("callback", _external=True))
+    return github.authorize_redirect(redirect_uri)
 
 
 @app.route("/callback")
@@ -71,6 +138,10 @@ def callback():
     # Save the access token in the session
     session["access_token"] = access_token
 
+    # Persist token for future automatic logins
+    if access_token:
+        save_token(access_token)
+
     # Get the username from the GitHub API
     username = get_username()
 
@@ -84,12 +155,11 @@ def callback():
     return redirect(url_for("index"))
 
 
-
 def get_access_token(code):
     # Configure the access token request
     payload = {
-        "client_id": "217973d6a6bd9d3defb9",
-        "client_secret": "861b796155a2e5a53ab17e68890e70bbeebadae6",
+        "client_id": os.getenv("GITHUB_CLIENT_ID"),
+        "client_secret": os.getenv("GITHUB_CLIENT_SECRET"),
         "code": code,
     }
 
@@ -177,12 +247,3 @@ if not os.path.exists("projects.txt"):
 if not os.path.exists("about.txt"):
     with open("about.txt", "w"):
         pass
-
-if __name__ == "__main__":
-    app_thread = threading.Thread(target=app.run, kwargs={"host": "localhost", "port": 5000})
-    app_thread.daemon = True
-    app_thread.start()
-    window = TextEditor()
-    window.show()
-    app_pyqt = QApplication(sys.argv)
-    sys.exit(app_pyqt.exec_())
