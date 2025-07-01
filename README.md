@@ -37,7 +37,7 @@ More features can be found in the Wiki.<br>
 - **Close Tab**: Close the currently active tab, with a prompt for unsaved changes.
 
 # Screenshots
-![image](https://github.com/SchBenedikt/Text-Editor/assets/137323528/84378902-e87f-405a-aed1-8f0437417dc3)
+![image](https://github.com/user-attachments/assets/98dcd5af-6dae-4e01-b083-66c8709d1d62)
 ![image](https://github.com/SchBenedikt/Text-Editor/assets/137323528/191ffcd3-89da-4711-8e73-5e0ab45e7923)
 
 ## Contributing
